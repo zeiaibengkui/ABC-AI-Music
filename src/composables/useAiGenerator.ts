@@ -224,7 +224,7 @@ export function useAiGenerator() {
         const comment = toolUse.input?.comment ? String(toolUse.input.comment) : null
 
         // Validate and report errors — let the AI fix them step by step
-        const errors = validateAbc(abc)
+        const errors = await validateAbc(abc)
 
         if (errors.length > 0) {
           // Don't accept the broken notation — report errors so the AI can fix them
@@ -453,10 +453,11 @@ async function streamApiCall(
 
 // ── Validation ──────────────────────────────────────────
 
-function validateAbc(abc: string): string[] {
+async function validateAbc(abc: string): Promise<string[]> {
   const errors: string[] = []
   const stripped = stripMarkdownFences(abc)
 
+  // Structural checks
   if (!/^X:\s*\d+/m.test(stripped)) errors.push('Missing X: (reference number) header')
   if (!/^K:\s*[A-Ga-g]/m.test(stripped)) errors.push('Missing K: (key signature) header')
   if (!/^M:\s*\d+\/\d+/m.test(stripped))
@@ -472,21 +473,15 @@ function validateAbc(abc: string): string[] {
   const quoteCount = (stripped.match(/"/g) || []).length
   if (quoteCount % 2 !== 0) errors.push('Unclosed double-quote in chord symbols')
 
-  const headerEndMatch = stripped.match(/^K:.*$/m)
-  if (headerEndMatch) {
-    const headerEnd = stripped.indexOf(headerEndMatch[0]) + headerEndMatch[0].length
-    const body = stripped.slice(headerEnd)
-    const nonAbcLines = body
-      .split('\n')
-      .filter(
-        (l) =>
-          l.trim() &&
-          !/[|:]/.test(l) &&
-          !/[A-Ga-g][',]*/.test(l) &&
-          !l.startsWith('w:') &&
-          !l.startsWith('%%'),
-      )
-    if (nonAbcLines.length > 2) errors.push('Appears to contain non-ABC text')
+  // Use abcjs parser for deeper validation
+  try {
+    const { default: abcjs } = await import('abcjs')
+    abcjs.parseOnly(stripped)
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e)
+    if (msg.includes('line') || msg.includes('column') || msg.includes('expected') || msg.includes('unexpected')) {
+      errors.push(`Parse error: ${msg}`)
+    }
   }
 
   return errors
