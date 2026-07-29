@@ -1,0 +1,314 @@
+<script setup lang="ts">
+import { ref, watch, onMounted, nextTick, onUnmounted } from 'vue'
+import abcjs from 'abcjs'
+import { BCollapse, BButton, BButtonGroup } from 'bootstrap-vue-next'
+import { useMusicStore } from '../stores/music'
+
+const store = useMusicStore()
+const notationRef = ref<HTMLDivElement>()
+const audioRef = ref<HTMLDivElement>()
+const showNotation = ref(false)
+const volume = ref(0.75)
+const gchord = ref('')
+const chordprog = ref(24)
+
+let synthControl: abcjs.SynthObjectController | null = null
+let masterGain: GainNode | null = null
+let audioCtx: AudioContext | null = null
+let origConnect: typeof AudioNode.prototype.connect | null = null
+let currentVisualObj: abcjs.TuneObject | null = null
+
+const STRUM_PATTERNS: { value: string; label: string }[] = [
+  { value: '', label: 'Block' },
+  { value: 'f8', label: 'Fast strum' },
+  { value: 's8', label: 'Slow strum' },
+  { value: 'f16', label: 'Tremolo' },
+  { value: 'B2 A2 G2 F2', label: 'Arp up' },
+  { value: 'F2 G2 A2 B2', label: 'Arp down' },
+]
+
+const CHORD_INSTRUMENTS: { value: number; label: string }[] = [
+  { value: 0, label: 'Piano' },
+  { value: 24, label: 'Guitar (nylon)' },
+  { value: 25, label: 'Guitar (steel)' },
+  { value: 48, label: 'Strings' },
+  { value: 16, label: 'Organ' },
+]
+
+function setupAudioContext() {
+  if (audioCtx) return // already set up
+
+  audioCtx = new AudioContext()
+  masterGain = audioCtx.createGain()
+  masterGain.gain.value = volume.value
+  masterGain.connect(audioCtx.destination)
+
+  // Register with abcjs so it uses our context
+  abcjs.synth.registerAudioContext(audioCtx)
+
+  // Intercept connections to destination — route through master gain
+  origConnect = AudioNode.prototype.connect
+  const connectProxy = function (this: AudioNode, ...args: unknown[]) {
+    const [dest] = args
+    if (dest === audioCtx!.destination && this !== masterGain) {
+      return (origConnect as Function).call(this, masterGain, ...args.slice(1))
+    }
+    return (origConnect as Function).call(this, ...args)
+  }
+  AudioNode.prototype.connect = connectProxy as typeof AudioNode.prototype.connect
+}
+
+function teardownAudioContext() {
+  if (origConnect) {
+    AudioNode.prototype.connect = origConnect
+    origConnect = null
+  }
+  synthControl = null
+  masterGain = null
+  audioCtx = null
+}
+
+function setVolume(value: number) {
+  volume.value = value
+  if (masterGain) {
+    masterGain.gain.value = value
+  }
+}
+
+async function applyChordSettings() {
+  if (!synthControl || !currentVisualObj) return
+  await synthControl.setTune(currentVisualObj, false, {
+    gchord: gchord.value,
+    chordprog: chordprog.value,
+  } as abcjs.SynthOptions)
+}
+
+function buildAudioParams(): abcjs.SynthOptions {
+  return {
+    gchord: gchord.value,
+    chordprog: chordprog.value,
+  } as abcjs.SynthOptions
+}
+
+async function renderSheet() {
+  if (!notationRef.value || !audioRef.value || !store.abcNotation) return
+
+  notationRef.value.innerHTML = ''
+  audioRef.value.innerHTML = ''
+
+  try {
+    const visualObj = abcjs.renderAbc(notationRef.value, store.abcNotation, {
+      responsive: 'resize',
+      add_classes: true,
+      staffwidth: 720,
+    })
+
+    if (abcjs.synth && abcjs.synth.supportsAudio()) {
+      const { synth } = abcjs
+
+      synthControl = null
+      currentVisualObj = visualObj[0]
+
+      // Ensure audio context is set up before synth init
+      setupAudioContext()
+
+      synthControl = new synth.SynthController()
+      synthControl.load(audioRef.value, null, {
+        displayLoop: true,
+        displayRestart: true,
+        displayPlay: true,
+        displayProgress: true,
+      })
+
+      // Initialize with our custom audio context
+      const audioSynth = new synth.CreateSynth()
+      await audioSynth.init({
+        visualObj: visualObj[0],
+        audioContext: audioCtx!,
+        options: buildAudioParams(),
+      })
+      await synthControl.setTune(visualObj[0], false, buildAudioParams())
+
+      // Restore volume after re-render (gain node persists across setTune calls)
+      if (masterGain) {
+        masterGain.gain.value = volume.value
+      }
+    }
+  } catch (e) {
+    console.error('abcjs render error:', e)
+  }
+}
+
+watch(() => store.abcNotation, async () => {
+  await nextTick()
+  renderSheet()
+})
+
+onMounted(() => {
+  if (store.abcNotation) {
+    renderSheet()
+  }
+})
+
+onUnmounted(() => {
+  teardownAudioContext()
+})
+
+async function copyAbc() {
+  await navigator.clipboard.writeText(store.abcNotation)
+}
+</script>
+
+<template>
+  <main class="d-flex flex-column gap-3 p-4 h-100 overflow-y-auto bg-body">
+    <template v-if="store.hasNotation">
+      <div class="flex-fill d-flex flex-column align-items-center p-3 sheet-area overflow-auto">
+        <div ref="notationRef" class="w-100" style="max-width: 760px;"></div>
+
+        <!-- Volume control -->
+        <div class="volume-row w-100 mt-3 d-flex align-items-center gap-2" style="max-width: 760px;">
+          <FontAwesomeIcon
+            :icon="volume === 0 ? 'volume-mute' : 'volume-up'"
+            class="text-body-secondary flex-shrink-0"
+            size="sm"
+          />
+          <input
+            type="range"
+            class="form-range flex-fill"
+            min="0"
+            max="1"
+            step="0.01"
+            :value="volume"
+            @input="setVolume(($event.target as HTMLInputElement).valueAsNumber)"
+          />
+          <span class="text-body-secondary small flex-shrink-0" style="min-width: 2.5rem; text-align: right;">
+            {{ Math.round(volume * 100) }}%
+          </span>
+        </div>
+
+        <!-- Chord controls -->
+        <div class="w-100 mt-2 d-flex align-items-center gap-2" style="max-width: 760px;">
+          <FontAwesomeIcon icon="guitar" class="text-body-secondary flex-shrink-0" size="sm" />
+          <select
+            class="form-select form-select-sm"
+            style="max-width: 140px;"
+            :value="chordprog"
+            @change="chordprog = Number(($event.target as HTMLSelectElement).value); applyChordSettings()"
+          >
+            <option
+              v-for="inst in CHORD_INSTRUMENTS"
+              :key="inst.value"
+              :value="inst.value"
+            >{{ inst.label }}</option>
+          </select>
+          <select
+            class="form-select form-select-sm"
+            style="max-width: 130px;"
+            :value="gchord"
+            @change="gchord = ($event.target as HTMLSelectElement).value; applyChordSettings()"
+          >
+            <option
+              v-for="pat in STRUM_PATTERNS"
+              :key="pat.value"
+              :value="pat.value"
+            >{{ pat.label }}</option>
+          </select>
+        </div>
+
+        <div ref="audioRef" class="audio-controls w-100 mt-2" style="max-width: 760px;"></div>
+      </div>
+
+      <div class="d-flex gap-2 align-items-start flex-wrap">
+        <BButtonGroup size="sm">
+          <BButton
+            variant="outline-secondary"
+            :pressed="showNotation"
+            @click="showNotation = !showNotation"
+          >
+            <FontAwesomeIcon icon="code" class="me-1" />
+            {{ showNotation ? 'Hide Notation' : 'Show Notation' }}
+          </BButton>
+          <BButton variant="outline-secondary" @click="copyAbc">
+            <FontAwesomeIcon icon="copy" class="me-1" />
+            Copy
+          </BButton>
+        </BButtonGroup>
+      </div>
+
+      <BCollapse :visible="showNotation">
+        <pre class="notation-text w-100 p-3 mb-0 border rounded overflow-x-auto">{{ store.abcNotation }}</pre>
+      </BCollapse>
+    </template>
+
+    <template v-else>
+      <div class="flex-fill d-flex flex-column align-items-center justify-content-center gap-2 text-center text-body-secondary">
+        <FontAwesomeIcon icon="music" size="3x" class="mb-2 text-body-secondary" />
+        <p class="h6 mb-0 text-body">No music yet</p>
+        <p class="small mb-0" style="max-width: 280px;">
+          Write a prompt and hit <strong class="text-primary">Generate</strong> to create your first piece.
+        </p>
+      </div>
+    </template>
+  </main>
+</template>
+
+<style scoped>
+.sheet-area {
+  background: #fdfcf8;
+  border-radius: var(--bs-border-radius-lg);
+}
+
+.volume-row {
+  padding: 0 0.25rem;
+}
+
+.notation-text {
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.audio-controls {
+  min-height: 48px;
+}
+
+/* Hide the "CSS required" warning — we style the controls ourselves */
+.audio-controls :deep(.abcjs-css-warning) {
+  display: none;
+}
+
+.audio-controls :deep(.abcjs-inline-audio) {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  padding: 0.75rem;
+  background: var(--bs-body-bg);
+  border: 1px solid var(--bs-border-color);
+  border-radius: var(--bs-border-radius);
+}
+
+.audio-controls :deep(.abcjs-inline-audio button) {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.875rem;
+  border: 1px solid var(--bs-border-color);
+  border-radius: var(--bs-border-radius);
+  background: var(--bs-body-bg);
+  color: var(--bs-body-color);
+  cursor: pointer;
+}
+
+.audio-controls :deep(.abcjs-inline-audio button:hover) {
+  background: var(--bs-tertiary-bg);
+}
+
+.audio-controls :deep(.abcjs-inline-audio .abcjs-progress-bar) {
+  flex: 1;
+  min-width: 120px;
+}
+
+.audio-controls :deep(svg) {
+  background: transparent;
+}
+</style>
