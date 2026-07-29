@@ -157,6 +157,20 @@ onUnmounted(() => {
 async function copyAbc() {
   await navigator.clipboard.writeText(store.abcNotation)
 }
+
+function downloadMidi() {
+  const result = abcjs.synth.getMidiFile(store.abcNotation, {
+    midiOutputType: 'binary',
+  })
+  const bytes = Array.isArray(result) ? result[0] : result
+  const blob = new Blob([bytes as BlobPart], { type: 'audio/midi' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = 'abc-ai-music.mid'
+  a.click()
+  URL.revokeObjectURL(url)
+}
 </script>
 
 <template>
@@ -233,6 +247,18 @@ async function copyAbc() {
             Copy
           </BButton>
         </BButtonGroup>
+
+        <BButtonGroup size="sm">
+          <BButton variant="outline-secondary" @click="downloadMidi">
+            MIDI
+          </BButton>
+          <BButton variant="outline-secondary" disabled>
+            MP3
+          </BButton>
+          <BButton variant="outline-secondary" disabled>
+            MusicXML
+          </BButton>
+        </BButtonGroup>
       </div>
 
       <BCollapse :visible="showNotation">
@@ -254,7 +280,7 @@ async function copyAbc() {
 
 <style scoped>
 .sheet-area {
-  background: #fdfcf8;
+  background: var(--bs-body-bg);
   border-radius: var(--bs-border-radius-lg);
 }
 

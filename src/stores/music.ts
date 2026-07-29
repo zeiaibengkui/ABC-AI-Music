@@ -20,6 +20,7 @@ export const useMusicStore = defineStore(
     const history = ref<HistoryEntry[]>([])
     const thinking = ref('')
     const streamingText = ref('')
+    const darkMode = ref(false)
 
     const { generateStream } = useAiGenerator()
 
@@ -44,6 +45,10 @@ export const useMusicStore = defineStore(
     function selectFromHistory(entry: HistoryEntry) {
       prompt.value = entry.prompt
       abcNotation.value = entry.abcNotation
+    }
+
+    function toggleDarkMode() {
+      darkMode.value = !darkMode.value
     }
 
     function clearError() {
@@ -92,19 +97,21 @@ export const useMusicStore = defineStore(
       history,
       thinking,
       streamingText,
+      darkMode,
       hasNotation,
       setPrompt,
       setAbcNotation,
       setPlaying,
       addToHistory,
       selectFromHistory,
+      toggleDarkMode,
       clearError,
       generate,
     }
   },
   {
     persist: {
-      pick: ['history'],
+      pick: ['history', 'darkMode'],
     },
   },
 )

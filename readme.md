@@ -1,8 +1,8 @@
-# Readme
+# ABC AI Music
 
 ## Overview
 
-ABC-AI-Music — a Vue 3 SPA that generates music from text prompts. Users describe music in natural language, an LLM produces ABC notation, and abcjs renders sheet music with audio playback in the browser.
+Let non-multi LLM produce music via abcjs, i.e. natural language.
 
 ## Preview
 

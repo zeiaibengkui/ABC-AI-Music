@@ -24,29 +24,20 @@ function handleKeydown(e: KeyboardEvent) {
 </script>
 
 <template>
-  <aside class="d-flex flex-column gap-3 p-4 h-100 border-end bg-body-tertiary overflow-y-auto">
+  <aside class="d-flex flex-column gap-3 p-4 h-100 border-end  overflow-y-auto">
     <div class="d-flex align-items-center justify-content-between">
-      <h2 class="text-uppercase fs-8 fw-semibold text-body-secondary mb-0" style="font-size: 0.6875rem; letter-spacing: 0.12em;">
+      <h2 class="text-uppercase fs-8 fw-semibold text-body-secondary mb-0"
+        style="font-size: 0.6875rem; letter-spacing: 0.12em;">
         Prompt
       </h2>
     </div>
 
     <div class="d-flex flex-column gap-2">
-      <BFormTextarea
-        :model-value="store.prompt"
-        @update:model-value="(v: unknown) => store.setPrompt(String(v ?? ''))"
-        @keydown="handleKeydown"
-        placeholder="Describe the music you want to hear…"
-        rows="4"
-        class="prompt-textarea"
-      />
+      <BFormTextarea :model-value="store.prompt" @update:model-value="(v: unknown) => store.setPrompt(String(v ?? ''))"
+        @keydown="handleKeydown" placeholder="Describe the music you want to hear…" rows="4" class="prompt-textarea" />
 
-      <BButton
-        variant="primary"
-        :disabled="!store.prompt.trim() || store.isLoading"
-        @click="store.generate()"
-        class="align-self-start"
-      >
+      <BButton variant="primary" :disabled="!store.prompt.trim() || store.isLoading" @click="store.generate()"
+        class="align-self-start">
         <BSpinner v-if="store.isLoading" small class="me-1" />
         <FontAwesomeIcon v-else icon="wand-magic-sparkles" class="me-1" />
         {{ store.isLoading ? 'Generating…' : 'Generate' }}
@@ -62,7 +53,8 @@ function handleKeydown(e: KeyboardEvent) {
     <div v-if="store.isLoading && store.streamingText" class="streaming-preview">
       <div class="d-flex align-items-center gap-1 mb-1">
         <BSpinner small class="text-primary" />
-        <span class="text-uppercase fw-semibold text-body-secondary" style="font-size: 0.625rem; letter-spacing: 0.1em;">
+        <span class="text-uppercase fw-semibold text-body-secondary"
+          style="font-size: 0.625rem; letter-spacing: 0.1em;">
           Live preview
         </span>
       </div>
@@ -71,10 +63,7 @@ function handleKeydown(e: KeyboardEvent) {
 
     <!-- Thinking section -->
     <div v-if="store.thinking" class="thinking-section">
-      <button
-        class="thinking-toggle"
-        @click="showThinking = !showThinking"
-      >
+      <button class="thinking-toggle" @click="showThinking = !showThinking">
         <span>{{ showThinking ? '▾' : '▸' }} AI thinking</span>
         <BSpinner small class="text-body-secondary ms-1" />
       </button>
@@ -84,17 +73,13 @@ function handleKeydown(e: KeyboardEvent) {
     </div>
 
     <div v-if="store.history.length" class="flex-fill overflow-y-auto d-flex flex-column gap-2">
-      <h2 class="text-uppercase fs-8 fw-semibold text-body-secondary mb-0" style="font-size: 0.6875rem; letter-spacing: 0.12em;">
+      <h2 class="text-uppercase fs-8 fw-semibold text-body-secondary mb-0"
+        style="font-size: 0.6875rem; letter-spacing: 0.12em;">
         History
       </h2>
       <BListGroup flush>
-        <BListGroupItem
-          v-for="entry in store.history"
-          :key="entry.id"
-          role="button"
-          @click="store.selectFromHistory(entry)"
-          class="history-item py-2 px-2"
-        >
+        <BListGroupItem v-for="entry in store.history" :key="entry.id" role="button"
+          @click="store.selectFromHistory(entry)" class="history-item py-2 px-2">
           <div class="text-truncate" style="font-size: 0.875rem;">
             {{ entry.prompt }}
           </div>
@@ -122,7 +107,7 @@ function handleKeydown(e: KeyboardEvent) {
 .streaming-preview {
   border: 1px solid var(--bs-border-color);
   border-radius: var(--bs-border-radius);
-  background: #1e1e1e;
+  background: var(--bs-body-bg);
   overflow: hidden;
 }
 
@@ -132,7 +117,7 @@ function handleKeydown(e: KeyboardEvent) {
   font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
   font-size: 0.6875rem;
   line-height: 1.5;
-  color: #d4d4d4;
+  color: var(--bs-body-color);
   white-space: pre-wrap;
   max-height: 160px;
   overflow-y: auto;
@@ -140,8 +125,8 @@ function handleKeydown(e: KeyboardEvent) {
 
 .streaming-preview .d-flex {
   padding: 0.375rem 0.75rem;
-  background: #2d2d2d;
-  border-bottom: 1px solid #3d3d3d;
+  background: var(--bs-tertiary-bg);
+  border-bottom: 1px solid var(--bs-border-color);
 }
 
 .thinking-section {

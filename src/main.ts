@@ -16,11 +16,14 @@ import {
   faRepeat,
   faWandMagicSparkles,
   faGuitar,
+  faSun,
+  faMoon,
 } from '@fortawesome/free-solid-svg-icons'
 import App from './App.vue'
 
 import 'bootstrap/dist/css/bootstrap.css'
 import 'bootstrap-vue-next/dist/bootstrap-vue-next.css'
+import '@/solarized.scss'
 
 library.add(
   faVolumeUp,
@@ -34,6 +37,8 @@ library.add(
   faRepeat,
   faWandMagicSparkles,
   faGuitar,
+  faSun,
+  faMoon,
 )
 
 const app = createApp(App)
