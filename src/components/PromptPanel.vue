@@ -18,8 +18,9 @@ watch(() => store.isLoading, (val) => {
   }
 })
 
-// Auto-scroll chat to bottom on new messages
-watch(() => store.conversation.length, () => {
+// Auto-expand and scroll chat when conversation changes (e.g. history selected)
+watch(() => store.conversation.length, (len) => {
+  if (len > 0) showChat.value = true
   setTimeout(() => {
     chatListRef.value?.scrollTo({ top: chatListRef.value.scrollHeight, behavior: 'smooth' })
   }, 100)
