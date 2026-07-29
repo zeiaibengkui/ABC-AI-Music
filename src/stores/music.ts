@@ -26,6 +26,7 @@ export const useMusicStore = defineStore(
     const darkMode = ref(false)
     const conversation = ref<Message[]>([])
     const isCallingTool = ref(false)
+    const renderError = ref<string | null>(null)
 
     const { generateStream, resetReadLock, requireRead } = useAiGenerator()
 
@@ -105,9 +106,16 @@ export const useMusicStore = defineStore(
 
       try {
         // Add user message to conversation immediately for snappy UX
+        // Include render error from previous turn so AI can fix it
+        let content = prompt.value
+        if (renderError.value) {
+          content = `[System: The previous music caused a rendering error: "${renderError.value}"] ${content}`
+          renderError.value = null
+        }
+
         const messages: Message[] = [
           ...conversation.value,
-          { role: 'user' as const, content: prompt.value },
+          { role: 'user' as const, content },
         ]
         conversation.value = messages
 
@@ -162,6 +170,7 @@ export const useMusicStore = defineStore(
       hasNotation,
       conversation,
       isCallingTool,
+      renderError,
       setPrompt,
       setAbcNotation,
       setPlaying,

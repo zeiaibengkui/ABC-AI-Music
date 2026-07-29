@@ -111,12 +111,14 @@ async function renderSheet() {
         masterGain.gain.value = volume.value
       }
       renderError.value = null
+      store.renderError = null
     }
     isRendering = false
   } catch (e) {
     isRendering = false
     const msg = e instanceof Error ? e.message : String(e)
     renderError.value = msg
+    store.renderError = msg
     console.error('abcjs render error:', e)
   }
 }
