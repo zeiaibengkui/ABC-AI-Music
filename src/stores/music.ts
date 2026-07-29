@@ -101,10 +101,12 @@ export const useMusicStore = defineStore(
       streamingText.value = ''
 
       try {
+        // Add user message to conversation immediately for snappy UX
         const messages: Message[] = [
           ...conversation.value,
           { role: 'user' as const, content: prompt.value },
         ]
+        conversation.value = messages
 
         const result = await generateStream(messages, {
           onThinking(text: string) {
@@ -123,8 +125,10 @@ export const useMusicStore = defineStore(
           abcNotation.value = result.abcNotation
         }
 
-        // Update conversation with properly structured messages
-        conversation.value = [...messages, ...result.messages]
+        // Append AI response to conversation
+        if (result.messages.length > 0) {
+          conversation.value = [...conversation.value, ...result.messages]
+        }
 
         if (result.abcNotation) {
           addToHistory({
