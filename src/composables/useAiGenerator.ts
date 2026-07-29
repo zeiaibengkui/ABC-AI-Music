@@ -492,10 +492,17 @@ async function validateAbc(abc: string): Promise<string[]> {
     const { default: abcjs } = await import('abcjs')
     abcjs.parseOnly(stripped)
   } catch (e) {
+    // Dynamic import failed or parseOnly threw
+    // Only report parse errors (not module load errors)
     const msg = e instanceof Error ? e.message : String(e)
-    if (msg.includes('line') || msg.includes('column') || msg.includes('expected') || msg.includes('unexpected')) {
+    const isParseError =
+      msg.includes('line') || msg.includes('column') ||
+      msg.includes('expected') || msg.includes('unexpected') ||
+      msg.includes('Unexpected')
+    if (isParseError) {
       errors.push(`Parse error: ${msg}`)
     }
+    // Module load failures are silently ignored — regex checks above are sufficient
   }
 
   return errors
