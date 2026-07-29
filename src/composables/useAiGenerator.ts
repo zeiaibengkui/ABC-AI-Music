@@ -522,9 +522,9 @@ async function mockGenerate(
   callbacks: StreamCallbacks,
 ): Promise<GenerateResult> {
   const lastUserMsg = [...messages].reverse().find((m) => m.role === 'user')
-  const prompt =
-    typeof lastUserMsg?.content === 'string' ? lastUserMsg.content : ''
+  const prompt = typeof lastUserMsg?.content === 'string' ? lastUserMsg.content : ''
   const lower = prompt.toLowerCase()
+  const existingAbc = getExistingAbc(messages)
 
   const tunes: Record<string, string> = {
     waltz: `X:1\nT:Generated Waltz\nM:3/4\nL:1/4\nK:Em\n%%MIDI program 40\n%%MIDI chordprog 24\n%%MIDI gchord f8\n|:"Em" E2 G B | "Am" A2 c e | "D" d2 B A | "G" G2 F# E | "Em" E2 G B | "Am" A c e | "B7" ^D2 ^F A | "Em" E6 :|\n|:"C" E2 G c | "G" B2 G B | "Am" A2 c e | "Em" G2 E G | "C" E G c e | "G" B G B d | "B7" ^F A ^d f | "Em" E6 :|`,
@@ -534,36 +534,74 @@ async function mockGenerate(
   }
 
   const entry = Object.entries(tunes).find(([k]) => lower.includes(k))
-  const abc = entry?.[1] ?? tunes.blues
+  let abc = entry?.[1] ?? tunes.blues
 
-  // Simulate chat + tool call
+  // If modifying existing music, tweak the existing ABC
+  const isModify = existingAbc && /\b(slower|faster|sadder|happier|change|modify|add|remove|edit|update|make it|turn|waltz|minor|major|key|tempo|voice|instrument)\b/.test(lower)
+  if (isModify && existingAbc) {
+    // Simulate read_abc first
+    callbacks.onThinking('Reading current notation before editing…\n')
+    await sleep(200)
+
+    const readBlocks: ContentBlock[] = [
+      { type: 'tool_use', id: 'mock_read_001', name: 'read_abc', input: {} },
+    ]
+    const readResult: ContentBlock = {
+      type: 'tool_result',
+      tool_use_id: 'mock_read_001',
+      content: `Current ABC notation:\n\`\`\`\n${existingAbc}\n\`\`\``,
+    }
+
+    // Modify: change tempo (Q:) and tweak the title
+    abc = existingAbc.replace(/Q:1\/4=\d+/, lower.includes('slower') ? 'Q:1/4=80' : 'Q:1/4=200')
+    abc = abc.replace(/T:[^\n]+/, `T:${existingAbc.match(/T:([^\n]+)/)?.[1] ?? 'Piece'} (modified)`)
+
+    callbacks.onToolCall()
+    await sleep(200)
+
+    const genBlocks: ContentBlock[] = [
+      { type: 'tool_use', id: 'mock_gen_001', name: 'generate_music', input: { abc_notation: abc, comment: 'Mock: applied modifications.' } },
+    ]
+    const genResult: ContentBlock = {
+      type: 'tool_result',
+      tool_use_id: 'mock_gen_001',
+      content: '✅ Music generated successfully. Mock: modifications applied.',
+    }
+
+    const allBlocks = [...readBlocks, readResult, ...genBlocks, genResult]
+
+    return {
+      text: 'Let me read the current notation first, then apply your changes.',
+      contentBlocks: allBlocks,
+      messages: [
+        { role: 'assistant' as const, content: readBlocks },
+        { role: 'user' as const, content: [readResult] },
+        { role: 'assistant' as const, content: genBlocks },
+        { role: 'user' as const, content: [genResult] },
+      ],
+      abcNotation: abc,
+    }
+  }
+
+  // New composition
   const chatText = "Here's what I came up with — a piece based on your description."
-
   callbacks.onThinking('Analyzing the prompt for musical style, key, and structure…\n')
   await sleep(300)
   callbacks.onThinking('Drafting the ABC notation with appropriate voicing…\n')
   await sleep(200)
 
-  // Stream the chat text
   for (const char of chatText) {
     callbacks.onTextDelta(char)
     await sleep(10)
   }
 
   callbacks.onToolCall()
-
-  // Simulate the tool call (brief pause, then "execute")
   await sleep(300)
 
   const contentBlocks: ContentBlock[] = [
     { type: 'text', text: chatText },
-    {
-      type: 'tool_use',
-      id: 'mock_tool_001',
-      name: 'generate_music',
-      input: { abc_notation: abc },
-    },
-    { type: 'tool_result', tool_use_id: 'mock_tool_001', content: 'Music generated successfully.' },
+    { type: 'tool_use', id: 'mock_tool_001', name: 'generate_music', input: { abc_notation: abc } },
+    { type: 'tool_result', tool_use_id: 'mock_tool_001', content: '✅ Music generated successfully.' },
   ]
 
   return {
