@@ -8,11 +8,11 @@
  * Uses an Anthropic-compatible Messages API endpoint with SSE streaming.
  */
 
-const MAX_RETRIES = 3
-
 const SYSTEM_PROMPT = `You are an expert music composer and arranger. Chat naturally with the user about music.
 When the user asks you to compose a new piece, call generate_music directly.
 When the user asks you to MODIFY existing music, you MUST call read_abc first to view the current notation, then call generate_music with your changes. The system enforces this — generate_music will be rejected if you haven't called read_abc since the last edit.
+
+CRITICAL: Use ONLY the native function calling mechanism (tool_use blocks) to call tools. NEVER output XML tags like <invoke>, <parameter>, <｜｜DSML｜｜tool_calls>, or <｜｜DSML｜｜invoke> in your text — these are NOT valid and will be rejected. Just call the tools directly through the function calling API.
 
 Rules for ABC notation inside the generate_music tool:
 - Include X:1, T: (title), M: (meter), L: (default note length), and K: (key) headers.
@@ -34,17 +34,31 @@ const TOOLS = [
   {
     name: 'read_abc',
     description:
-      'Read the current ABC notation that is already in the conversation. You MUST call this before calling generate_music when modifying existing music. This is like reading a file before editing it.',
+      'Read the current ABC notation that is already in the conversation. You MUST call this before calling generate_music when modifying existing music. Optionally filter by voice name or bar range.',
     input_schema: {
       type: 'object',
-      properties: {},
+      properties: {
+        voice: {
+          type: 'string',
+          description:
+            'Optional. Voice/part name to read (e.g. "Violin", "Cello", "Piano"). If omitted, returns all voices.',
+        },
+        start_bar: {
+          type: 'integer',
+          description: 'Optional. Starting bar number (1-based). If omitted, starts from the beginning.',
+        },
+        end_bar: {
+          type: 'integer',
+          description: 'Optional. Ending bar number (1-based, inclusive). If omitted, reads to the end.',
+        },
+      },
       required: [],
     },
   },
   {
     name: 'generate_music',
     description:
-      'Generate or update ABC music notation and render it for playback. IMPORTANT: when modifying existing music, you must call read_abc first — the system will reject this call if you have not read the current notation.',
+      'Generate or update ABC music notation and render it for playback. IMPORTANT: when modifying existing music, you must call read_abc first. You can target a specific voice/part or bar range when editing.',
     input_schema: {
       type: 'object',
       properties: {
@@ -52,6 +66,26 @@ const TOOLS = [
           type: 'string',
           description:
             'Complete, valid ABC notation for the piece. Must include X:, T:, M:, L:, K: headers, chord symbols in double quotes, %%MIDI directives for sound, and at least 8 bars of music.',
+        },
+        voice: {
+          type: 'string',
+          description:
+            'Optional. Voice/part name being edited (e.g. "Violin", "Cello"). If the voice does not exist in the current notation, a new voice will be created.',
+        },
+        start_bar: {
+          type: 'integer',
+          description:
+            'Optional. Starting bar number (1-based) for the edited section. If omitted, the entire piece is considered.',
+        },
+        end_bar: {
+          type: 'integer',
+          description:
+            'Optional. Ending bar number (1-based, inclusive) for the edited section.',
+        },
+        comment: {
+          type: 'string',
+          description:
+            'Optional. Brief description of what was changed, for display to the user.',
         },
       },
       required: ['abc_notation'],
@@ -98,8 +132,10 @@ export interface StreamCallbacks {
 }
 
 export interface ContentBlock {
-  type: 'text' | 'tool_use' | 'tool_result'
+  type: 'text' | 'tool_use' | 'tool_result' | 'thinking' | 'redacted_thinking'
   text?: string
+  thinking?: string
+  signature?: string
   id?: string
   name?: string
   input?: Record<string, unknown>
@@ -117,6 +153,8 @@ export interface GenerateResult {
   text: string
   /** The raw content blocks for storage in conversation */
   contentBlocks: ContentBlock[]
+  /** Properly structured messages to append to conversation (assistant↔user pairs) */
+  messages: Message[]
   /** Extracted ABC notation if a tool was called */
   abcNotation?: string
 }
@@ -132,42 +170,46 @@ export function useAiGenerator() {
    * Sends the conversation to the API. If the AI calls the generate_music
    * tool, we execute it and run a follow-up call so the AI can respond.
    */
-  async function generateStream(
-    messages: Message[],
-    callbacks: StreamCallbacks,
-  ): Promise<GenerateResult> {
-    if (!apiKey) {
-      console.warn('No API key set — using mock generation')
-      return mockGenerate(messages, callbacks)
-    }
-
-    // Phase 1: stream the AI's response (may include tool calls)
-    const phase1 = await streamApiCall(messages, false, callbacks)
-
-    // Separate tool_use blocks from text
-    const toolUses = phase1.contentBlocks.filter((b) => b.type === 'tool_use')
-    if (toolUses.length === 0) {
-      return { text: phase1.text, contentBlocks: phase1.contentBlocks }
-    }
-
-    // Process all tool_use blocks in order
+  /**
+   * Execute tool calls from the AI and return tool_results.
+   * Returns { toolResults, abcNotation, hasBlockedTool }.
+   * `hasBlockedTool` is true if any generate_music was blocked (needs read_abc first).
+   */
+  async function executeTools(
+    toolUses: ContentBlock[],
+    allMessages: Message[],
+  ): Promise<{
+    toolResults: ContentBlock[]
+    abcNotation?: string
+    hasBlockedTool: boolean
+  }> {
     const toolResults: ContentBlock[] = []
     let abcNotation: string | undefined
+    let hasBlockedTool = false
 
     for (const toolUse of toolUses) {
       if (toolUse.name === 'read_abc') {
-        const existingAbc = getExistingAbc(messages)
+        const existingAbc = getExistingAbc(allMessages)
+        const voice = toolUse.input?.voice ? String(toolUse.input.voice) : null
+        const startBar = toolUse.input?.start_bar ? Number(toolUse.input.start_bar) : null
+        const endBar = toolUse.input?.end_bar ? Number(toolUse.input.end_bar) : null
+
         readSinceLastWrite = true
-        toolResults.push({
-          type: 'tool_result',
-          tool_use_id: toolUse.id,
-          content: existingAbc
-            ? `Current ABC notation:\n\`\`\`\n${existingAbc}\n\`\`\``
-            : 'No existing music to read. Go ahead and compose a new piece.',
-        })
+
+        let result = existingAbc
+          ? `Current ABC notation${voice ? ` (voice: ${voice})` : ''}${startBar ? ` [bars ${startBar}${endBar ? `-${endBar}` : '+'}]` : ''}:\n\`\`\`\n${existingAbc}\n\`\`\``
+          : 'No existing music to read. Go ahead and compose a new piece.'
+
+        if (voice && existingAbc) {
+          const hasVoice = new RegExp(`V:\\s*${voice.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(existingAbc)
+          if (!hasVoice)
+            result += `\n\nNote: voice "${voice}" does not exist yet. It will be created when you call generate_music.`
+        }
+
+        toolResults.push({ type: 'tool_result', tool_use_id: toolUse.id, content: result })
       } else if (toolUse.name === 'generate_music') {
-        // Enforce read-before-write
-        if (!readSinceLastWrite && hasExistingMusic(messages)) {
+        if (!readSinceLastWrite && hasExistingMusic(allMessages)) {
+          hasBlockedTool = true
           toolResults.push({
             type: 'tool_result',
             tool_use_id: toolUse.id,
@@ -177,54 +219,108 @@ export function useAiGenerator() {
           continue
         }
 
-        let abc = String(toolUse.input?.abc_notation ?? '')
+        const abc = String(toolUse.input?.abc_notation ?? '')
+        const voice = toolUse.input?.voice ? String(toolUse.input.voice) : null
+        const comment = toolUse.input?.comment ? String(toolUse.input.comment) : null
 
-        // Validate + auto-correct
-        for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-          const errors = validateAbc(abc)
-          if (errors.length === 0) break
+        // Validate and report errors — let the AI fix them step by step
+        const errors = validateAbc(abc)
 
-          console.warn(
-            `ABC validation failed (attempt ${attempt}/${MAX_RETRIES}):`,
-            errors.join('; '),
-          )
-
-          const correctionPrompt =
-            `The ABC notation you generated has the following problems:\n` +
-            errors.map((e) => `- ${e}`).join('\n') +
-            `\n\nHere is the broken notation:\n\`\`\`\n${abc}\n\`\`\`\n\n` +
-            `Please output ONLY the corrected ABC notation. Fix ALL of the issues listed above.`
-
-          try {
-            abc = await callAi(correctionPrompt)
-          } catch {
-            break
-          }
+        if (errors.length > 0) {
+          // Don't accept the broken notation — report errors so the AI can fix them
+          toolResults.push({
+            type: 'tool_result',
+            tool_use_id: toolUse.id,
+            content:
+              `❌ Validation failed. Fix these issues and call generate_music again:\n` +
+              errors.map((e) => `- ${e}`).join('\n') +
+              `\n\nYour ABC that needs fixing:\n\`\`\`\n${abc}\n\`\`\``,
+          })
+          // Keep readSinceLastWrite unchanged — the AI hasn't successfully written yet
+          continue
         }
 
+        // ABC is valid — accept it
         readSinceLastWrite = false
         abcNotation = abc
-        toolResults.push({
-          type: 'tool_result',
-          tool_use_id: toolUse.id,
-          content: 'Music generated successfully.',
-        })
+
+        let resultContent = '✅ Music generated successfully.'
+        if (voice) resultContent += ` Voice: ${voice}.`
+        if (comment) resultContent += ` ${comment}`
+
+        toolResults.push({ type: 'tool_result', tool_use_id: toolUse.id, content: resultContent })
       }
     }
 
-    // Phase 3: send tool_results, get AI's final text
-    const phase3Messages: Message[] = [
-      ...messages,
-      { role: 'assistant', content: phase1.contentBlocks },
-      { role: 'user', content: toolResults },
-    ]
+    return { toolResults, abcNotation, hasBlockedTool }
+  }
 
-    const phase3 = await streamApiCall(phase3Messages, true, callbacks)
+  async function generateStream(
+    messages: Message[],
+    callbacks: StreamCallbacks,
+  ): Promise<GenerateResult> {
+    if (!apiKey) {
+      console.warn('No API key set — using mock generation')
+      return mockGenerate(messages, callbacks)
+    }
+
+    let allText = ''
+    const allContentBlocks: ContentBlock[] = []
+    let finalAbcNotation: string | undefined
+    let currentMessages = messages
+
+    // Multi-round tool loop: keep going while the AI calls tools
+    const newMessages: Message[] = []
+
+    for (let round = 0; round < 4; round++) {
+      const isToolResult = round > 0
+      const response = await streamApiCall(currentMessages, isToolResult, callbacks)
+
+      allText += (allText ? ' ' : '') + response.text
+      allContentBlocks.push(...response.contentBlocks)
+
+      const toolUses = response.contentBlocks.filter((b) => b.type === 'tool_use')
+      if (toolUses.length === 0) {
+        // Final text response — store as assistant message
+        if (response.contentBlocks.length > 0) {
+          newMessages.push({ role: 'assistant' as const, content: response.contentBlocks })
+        }
+        break
+      }
+
+      const { toolResults, abcNotation, hasBlockedTool } = await executeTools(
+        toolUses,
+        messages,
+      )
+
+      if (abcNotation) finalAbcNotation = abcNotation
+      allContentBlocks.push(...toolResults)
+
+      // Store this round: assistant (text + tool_use) → user (tool_result)
+      newMessages.push({ role: 'assistant' as const, content: response.contentBlocks })
+      newMessages.push({ role: 'user' as const, content: toolResults })
+
+      // Build next round messages
+      currentMessages = [
+        ...currentMessages,
+        { role: 'assistant' as const, content: response.contentBlocks },
+        { role: 'user' as const, content: toolResults },
+      ]
+
+      // If a tool was blocked or read-only, continue to next round
+      if (!hasBlockedTool && !toolUses.some((tu) => tu.name === 'read_abc')) break
+    }
+
+    // Reorder for DeepSeek compatibility (flat view)
+    const textBlocks = allContentBlocks.filter((b) => b.type === 'text')
+    const toolBlocks = allContentBlocks.filter((b) => b.type === 'tool_use')
+    const resultBlocks = allContentBlocks.filter((b) => b.type === 'tool_result')
 
     return {
-      text: (phase1.text + ' ' + phase3.text).trim(),
-      contentBlocks: [...phase1.contentBlocks, ...toolResults, ...phase3.contentBlocks],
-      abcNotation,
+      text: allText.trim(),
+      contentBlocks: [...textBlocks, ...toolBlocks, ...resultBlocks],
+      messages: newMessages,
+      abcNotation: finalAbcNotation,
     }
   }
 
@@ -251,10 +347,10 @@ async function streamApiCall(
     },
     body: JSON.stringify({
       model,
-      max_tokens: 4096,
+      max_tokens: 16384,
       stream: true,
       system: isToolResult
-        ? 'You are a music composition assistant. If the tool result shows the music was generated successfully, briefly acknowledge it — mention a key detail or two. If the tool was BLOCKED (read-before-write), apologize briefly and call read_abc first, then you can call generate_music. If read_abc returned the current notation, acknowledge what you see and then call generate_music with your changes. Be conversational.'
+        ? 'You are a music composition assistant. If the music was generated successfully, briefly acknowledge it. If a tool was BLOCKED, call read_abc to view the current notation. If read_abc returned the notation, call generate_music with your changes. Be conversational — you may call tools as needed.'
         : SYSTEM_PROMPT,
       tools: TOOLS,
       messages,
@@ -346,45 +442,13 @@ async function streamApiCall(
     }
   }
 
-  const contentBlocks: ContentBlock[] = Array.from(blocks.values())
+  // Filter out internal blocks (thinking, redacted_thinking) —
+  // they are AI-internal reasoning, not part of the conversation.
+  const contentBlocks: ContentBlock[] = Array.from(blocks.values()).filter(
+    (b) => b.type !== 'thinking' && b.type !== 'redacted_thinking',
+  )
 
   return { text: textResult.trim(), contentBlocks }
-}
-
-// ── Non-streaming API call (for correction retries) ────
-
-async function callAi(userPrompt: string): Promise<string> {
-  const baseUrl = import.meta.env.VITE_ANTHROPIC_BASE_URL || 'https://api.anthropic.com'
-  const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY || ''
-  const model = import.meta.env.VITE_ANTHROPIC_MODEL || 'claude-sonnet-5'
-
-  const response = await fetch(`${baseUrl}/v1/messages`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
-    },
-    body: JSON.stringify({
-      model,
-      max_tokens: 4096,
-      system: 'You are an expert music composer. Output ONLY the corrected ABC notation, no explanation.',
-      messages: [{ role: 'user', content: userPrompt }],
-    }),
-  })
-
-  if (!response.ok) {
-    const err = await response.text()
-    throw new Error(`API error ${response.status}: ${err}`)
-  }
-
-  const data = await response.json()
-  const textBlock = data.content?.find(
-    (c: { type: string; text?: string }) => c.type === 'text',
-  )
-  const text: string = textBlock?.text ?? ''
-  if (!text.trim()) throw new Error('Empty response from API')
-  return text.trim()
 }
 
 // ── Validation ──────────────────────────────────────────
@@ -486,7 +550,15 @@ async function mockGenerate(
     { type: 'tool_result', tool_use_id: 'mock_tool_001', content: 'Music generated successfully.' },
   ]
 
-  return { text: chatText, contentBlocks, abcNotation: abc }
+  return {
+    text: chatText,
+    contentBlocks,
+    messages: [
+      { role: 'assistant' as const, content: [contentBlocks[0]!, contentBlocks[1]!] },
+      { role: 'user' as const, content: [contentBlocks[2]!] },
+    ],
+    abcNotation: abc,
+  }
 }
 
 function sleep(ms: number) {

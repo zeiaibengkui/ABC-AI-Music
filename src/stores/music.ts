@@ -3,7 +3,6 @@ import { defineStore } from 'pinia'
 import {
   useAiGenerator,
   type Message,
-  type ContentBlock,
 } from '../composables/useAiGenerator'
 
 export interface HistoryEntry {
@@ -51,6 +50,7 @@ export const useMusicStore = defineStore(
     function selectFromHistory(entry: HistoryEntry) {
       prompt.value = entry.prompt
       abcNotation.value = entry.abcNotation
+      const toolId = crypto.randomUUID()
       conversation.value = [
         { role: 'user', content: entry.prompt },
         {
@@ -59,7 +59,7 @@ export const useMusicStore = defineStore(
             { type: 'text', text: 'Restored from history.' },
             {
               type: 'tool_use',
-              id: crypto.randomUUID(),
+              id: toolId,
               name: 'generate_music',
               input: { abc_notation: entry.abcNotation },
             },
@@ -70,7 +70,7 @@ export const useMusicStore = defineStore(
           content: [
             {
               type: 'tool_result',
-              tool_use_id: '',
+              tool_use_id: toolId,
               content: 'Music restored.',
             },
           ],
@@ -123,25 +123,8 @@ export const useMusicStore = defineStore(
           abcNotation.value = result.abcNotation
         }
 
-        // Build the assistant message from content blocks
-        const assistantContent: ContentBlock[] = result.contentBlocks.filter(
-          (b) => b.type !== 'tool_result',
-        )
-        const userToolResult: ContentBlock[] = result.contentBlocks.filter(
-          (b) => b.type === 'tool_result',
-        )
-
-        // Update conversation
-        conversation.value = [
-          ...messages,
-          { role: 'assistant' as const, content: assistantContent },
-        ]
-        if (userToolResult.length > 0) {
-          conversation.value.push({
-            role: 'user' as const,
-            content: userToolResult,
-          })
-        }
+        // Update conversation with properly structured messages
+        conversation.value = [...messages, ...result.messages]
 
         if (result.abcNotation) {
           addToHistory({

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, onMounted, nextTick, onUnmounted } from 'vue'
 import abcjs from 'abcjs'
+import 'abcjs/abcjs-audio.css'
 import { BCollapse, BButton, BButtonGroup } from 'bootstrap-vue-next'
 import { useMusicStore } from '../stores/music'
 
@@ -10,6 +11,7 @@ const audioRef = ref<HTMLDivElement>()
 const showNotation = ref(false)
 const volume = ref(0.75)
 const isUserEditing = ref(false)
+const renderError = ref<string | null>(null)
 
 function commitAbcEdit() {
   isUserEditing.value = false
@@ -20,6 +22,7 @@ let synthControl: abcjs.SynthObjectController | null = null
 let masterGain: GainNode | null = null
 let audioCtx: AudioContext | null = null
 let origConnect: typeof AudioNode.prototype.connect | null = null
+let isRendering = false
 
 function setupAudioContext() {
   if (audioCtx) return // already set up
@@ -64,6 +67,8 @@ function setVolume(value: number) {
 
 async function renderSheet() {
   if (!notationRef.value || !audioRef.value || !store.abcNotation) return
+  if (isRendering) return
+  isRendering = true
 
   notationRef.value.innerHTML = ''
   audioRef.value.innerHTML = ''
@@ -105,8 +110,13 @@ async function renderSheet() {
       if (masterGain) {
         masterGain.gain.value = volume.value
       }
+      renderError.value = null
     }
+    isRendering = false
   } catch (e) {
+    isRendering = false
+    const msg = e instanceof Error ? e.message : String(e)
+    renderError.value = msg
     console.error('abcjs render error:', e)
   }
 }
@@ -174,6 +184,12 @@ function downloadMidi() {
         </div>
 
         <div ref="audioRef" class="audio-controls w-100 mt-2" style="max-width: 760px;"></div>
+
+        <!-- Render error display -->
+        <div v-if="renderError" class="render-error w-100 mt-2" style="max-width: 760px;">
+          ⚠️ Render error &mdash; edit the ABC below to fix:
+          <pre class="render-error-text">{{ renderError }}</pre>
+        </div>
       </div>
 
       <div class="d-flex gap-2 align-items-start flex-wrap">
@@ -238,6 +254,29 @@ function downloadMidi() {
   padding: 0 0.25rem;
 }
 
+.render-error {
+  padding: 0.625rem 0.75rem;
+  border: 1px solid var(--bs-danger-border-subtle, #f5b7b5);
+  border-radius: var(--bs-border-radius);
+  background: var(--bs-danger-bg-subtle, #fce8e7);
+  color: var(--bs-danger-text-emphasis, #8a1e1c);
+  font-size: 0.8125rem;
+}
+
+.render-error-text {
+  margin: 0.375rem 0 0 0;
+  padding: 0.375rem 0.5rem;
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-size: 0.6875rem;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  max-height: 100px;
+  overflow-y: auto;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: var(--bs-border-radius-sm);
+  color: inherit;
+}
+
 .notation-text {
   font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
   font-size: 0.8125rem;
@@ -247,44 +286,5 @@ function downloadMidi() {
 
 .audio-controls {
   min-height: 48px;
-}
-
-/* Hide the "CSS required" warning — we style the controls ourselves */
-.audio-controls :deep(.abcjs-css-warning) {
-  display: none;
-}
-
-.audio-controls :deep(.abcjs-inline-audio) {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-  padding: 0.75rem;
-  background: var(--bs-body-bg);
-  border: 1px solid var(--bs-border-color);
-  border-radius: var(--bs-border-radius);
-}
-
-.audio-controls :deep(.abcjs-inline-audio button) {
-  padding: 0.375rem 0.75rem;
-  font-size: 0.875rem;
-  border: 1px solid var(--bs-border-color);
-  border-radius: var(--bs-border-radius);
-  background: var(--bs-body-bg);
-  color: var(--bs-body-color);
-  cursor: pointer;
-}
-
-.audio-controls :deep(.abcjs-inline-audio button:hover) {
-  background: var(--bs-tertiary-bg);
-}
-
-.audio-controls :deep(.abcjs-inline-audio .abcjs-progress-bar) {
-  flex: 1;
-  min-width: 120px;
-}
-
-.audio-controls :deep(svg) {
-  background: transparent;
 }
 </style>

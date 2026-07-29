@@ -31,12 +31,12 @@ watch(
         </BButton>
       </header>
 
-      <div class="app-body d-grid flex-fill min-h-0" style="grid-template-columns: 40fr 60fr;overflow: scroll;">
+      <div class="app-body d-grid flex-fill min-h-0" style="grid-template-columns: 40fr 60fr;overflow: auto;">
         <PromptPanel />
         <MusicPanel />
       </div>
 
-      <footer class="app-footer px-4 py-2 border-top  text-center text-body-secondary small flex-shrink-0">
+      <footer class="app-footer px-4 py-1 border-top  text-center text-body-secondary small flex-shrink-0">
         Built with Vue 3 &middot; abcjs &middot; AI
       </footer>
     </div>
