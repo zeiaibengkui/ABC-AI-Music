@@ -9,31 +9,17 @@ const notationRef = ref<HTMLDivElement>()
 const audioRef = ref<HTMLDivElement>()
 const showNotation = ref(false)
 const volume = ref(0.75)
-const gchord = ref('')
-const chordprog = ref(24)
+const isUserEditing = ref(false)
+
+function commitAbcEdit() {
+  isUserEditing.value = false
+  renderSheet()
+}
 
 let synthControl: abcjs.SynthObjectController | null = null
 let masterGain: GainNode | null = null
 let audioCtx: AudioContext | null = null
 let origConnect: typeof AudioNode.prototype.connect | null = null
-let currentVisualObj: abcjs.TuneObject | null = null
-
-const STRUM_PATTERNS: { value: string; label: string }[] = [
-  { value: '', label: 'Block' },
-  { value: 'f8', label: 'Fast strum' },
-  { value: 's8', label: 'Slow strum' },
-  { value: 'f16', label: 'Tremolo' },
-  { value: 'B2 A2 G2 F2', label: 'Arp up' },
-  { value: 'F2 G2 A2 B2', label: 'Arp down' },
-]
-
-const CHORD_INSTRUMENTS: { value: number; label: string }[] = [
-  { value: 0, label: 'Piano' },
-  { value: 24, label: 'Guitar (nylon)' },
-  { value: 25, label: 'Guitar (steel)' },
-  { value: 48, label: 'Strings' },
-  { value: 16, label: 'Organ' },
-]
 
 function setupAudioContext() {
   if (audioCtx) return // already set up
@@ -48,12 +34,13 @@ function setupAudioContext() {
 
   // Intercept connections to destination — route through master gain
   origConnect = AudioNode.prototype.connect
+   
   const connectProxy = function (this: AudioNode, ...args: unknown[]) {
     const [dest] = args
     if (dest === audioCtx!.destination && this !== masterGain) {
-      return (origConnect as Function).call(this, masterGain, ...args.slice(1))
+      return origConnect!.apply(this, [masterGain, ...args.slice(1)] as unknown as Parameters<typeof AudioNode.prototype.connect>)
     }
-    return (origConnect as Function).call(this, ...args)
+    return origConnect!.apply(this, args as unknown as Parameters<typeof AudioNode.prototype.connect>)
   }
   AudioNode.prototype.connect = connectProxy as typeof AudioNode.prototype.connect
 }
@@ -75,21 +62,6 @@ function setVolume(value: number) {
   }
 }
 
-async function applyChordSettings() {
-  if (!synthControl || !currentVisualObj) return
-  await synthControl.setTune(currentVisualObj, false, {
-    gchord: gchord.value,
-    chordprog: chordprog.value,
-  } as abcjs.SynthOptions)
-}
-
-function buildAudioParams(): abcjs.SynthOptions {
-  return {
-    gchord: gchord.value,
-    chordprog: chordprog.value,
-  } as abcjs.SynthOptions
-}
-
 async function renderSheet() {
   if (!notationRef.value || !audioRef.value || !store.abcNotation) return
 
@@ -107,7 +79,6 @@ async function renderSheet() {
       const { synth } = abcjs
 
       synthControl = null
-      currentVisualObj = visualObj[0]
 
       // Ensure audio context is set up before synth init
       setupAudioContext()
@@ -120,14 +91,15 @@ async function renderSheet() {
         displayProgress: true,
       })
 
-      // Initialize with our custom audio context
+      // Warm up the soundfont cache with our custom audio context.
+      // MIDI directives (%%MIDI chordprog, %%MIDI gchord, etc.) in the
+      // ABC notation are parsed automatically by abcjs — no manual options needed.
       const audioSynth = new synth.CreateSynth()
       await audioSynth.init({
         visualObj: visualObj[0],
         audioContext: audioCtx!,
-        options: buildAudioParams(),
       })
-      await synthControl.setTune(visualObj[0], false, buildAudioParams())
+      await synthControl.setTune(visualObj[0], false)
 
       // Restore volume after re-render (gain node persists across setTune calls)
       if (masterGain) {
@@ -140,6 +112,7 @@ async function renderSheet() {
 }
 
 watch(() => store.abcNotation, async () => {
+  if (isUserEditing.value) return
   await nextTick()
   renderSheet()
 })
@@ -200,35 +173,6 @@ function downloadMidi() {
           </span>
         </div>
 
-        <!-- Chord controls -->
-        <div class="w-100 mt-2 d-flex align-items-center gap-2" style="max-width: 760px;">
-          <FontAwesomeIcon icon="guitar" class="text-body-secondary flex-shrink-0" size="sm" />
-          <select
-            class="form-select form-select-sm"
-            style="max-width: 140px;"
-            :value="chordprog"
-            @change="chordprog = Number(($event.target as HTMLSelectElement).value); applyChordSettings()"
-          >
-            <option
-              v-for="inst in CHORD_INSTRUMENTS"
-              :key="inst.value"
-              :value="inst.value"
-            >{{ inst.label }}</option>
-          </select>
-          <select
-            class="form-select form-select-sm"
-            style="max-width: 130px;"
-            :value="gchord"
-            @change="gchord = ($event.target as HTMLSelectElement).value; applyChordSettings()"
-          >
-            <option
-              v-for="pat in STRUM_PATTERNS"
-              :key="pat.value"
-              :value="pat.value"
-            >{{ pat.label }}</option>
-          </select>
-        </div>
-
         <div ref="audioRef" class="audio-controls w-100 mt-2" style="max-width: 760px;"></div>
       </div>
 
@@ -262,7 +206,13 @@ function downloadMidi() {
       </div>
 
       <BCollapse :visible="showNotation">
-        <pre class="notation-text w-100 p-3 mb-0 border rounded overflow-x-auto">{{ store.abcNotation }}</pre>
+        <textarea
+          v-model="store.abcNotation"
+          class="notation-text w-100 p-3 mb-0 border rounded"
+          rows="16"
+          @input="isUserEditing = true"
+          @blur="commitAbcEdit"
+        ></textarea>
       </BCollapse>
     </template>
 

@@ -15,7 +15,6 @@ import {
   faRotateLeft,
   faRepeat,
   faWandMagicSparkles,
-  faGuitar,
   faSun,
   faMoon,
 } from '@fortawesome/free-solid-svg-icons'
@@ -36,7 +35,6 @@ library.add(
   faRotateLeft,
   faRepeat,
   faWandMagicSparkles,
-  faGuitar,
   faSun,
   faMoon,
 )

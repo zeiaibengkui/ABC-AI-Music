@@ -31,7 +31,7 @@ watch(
         </BButton>
       </header>
 
-      <div class="app-body d-grid flex-fill min-h-0" style="grid-template-columns: 40fr 60fr">
+      <div class="app-body d-grid flex-fill min-h-0" style="grid-template-columns: 40fr 60fr;overflow: scroll;">
         <PromptPanel />
         <MusicPanel />
       </div>
