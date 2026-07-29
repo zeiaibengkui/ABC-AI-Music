@@ -21,7 +21,6 @@
     "@fortawesome/vue-fontawesome": "^3.3.3",
     "@popperjs/core": "^2.11.8",
     "abcjs": "^6.6.4",
-    "abcls": "^0.1.0",
     "bootstrap": "^5.3.8",
     "bootstrap-vue-next": "^0.45.8",
     "pinia": "^4.0.2",
