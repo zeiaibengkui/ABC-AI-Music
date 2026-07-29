@@ -123,8 +123,16 @@ async function renderSheet() {
   }
 }
 
-watch(() => store.abcNotation, async () => {
+watch(() => store.abcNotation, async (val) => {
   if (isUserEditing.value) return
+  if (!val) {
+    // Notation cleared — reset the display
+    if (notationRef.value) notationRef.value.innerHTML = ''
+    if (audioRef.value) audioRef.value.innerHTML = ''
+    renderError.value = null
+    store.renderError = null
+    return
+  }
   await nextTick()
   renderSheet()
 })

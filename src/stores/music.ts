@@ -92,6 +92,7 @@ export const useMusicStore = defineStore(
     function resetConversation() {
       conversation.value = []
       prompt.value = ''
+      abcNotation.value = ''
       resetReadLock()
     }
 
