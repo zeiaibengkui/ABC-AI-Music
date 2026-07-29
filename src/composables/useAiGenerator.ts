@@ -324,7 +324,15 @@ export function useAiGenerator() {
     }
   }
 
-  return { generateStream }
+  function resetReadLock() {
+    readSinceLastWrite = true
+  }
+
+  function requireRead() {
+    readSinceLastWrite = false
+  }
+
+  return { generateStream, resetReadLock, requireRead }
 }
 
 // ── Core streaming call ─────────────────────────────────

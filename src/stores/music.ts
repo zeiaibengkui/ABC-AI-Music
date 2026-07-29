@@ -27,7 +27,7 @@ export const useMusicStore = defineStore(
     const conversation = ref<Message[]>([])
     const isCallingTool = ref(false)
 
-    const { generateStream } = useAiGenerator()
+    const { generateStream, resetReadLock, requireRead } = useAiGenerator()
 
     const hasNotation = computed(() => abcNotation.value.length > 0)
 
@@ -50,6 +50,8 @@ export const useMusicStore = defineStore(
     function selectFromHistory(entry: HistoryEntry) {
       prompt.value = entry.prompt
       abcNotation.value = entry.abcNotation
+      // Music already exists — AI must read before modifying
+      requireRead()
       const toolId = crypto.randomUUID()
       conversation.value = [
         { role: 'user', content: entry.prompt },
@@ -89,6 +91,7 @@ export const useMusicStore = defineStore(
     function resetConversation() {
       conversation.value = []
       prompt.value = ''
+      resetReadLock()
     }
 
     async function generate() {
