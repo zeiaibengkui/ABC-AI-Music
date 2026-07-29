@@ -249,6 +249,12 @@ export function useAiGenerator() {
         if (comment) resultContent += ` ${comment}`
 
         toolResults.push({ type: 'tool_result', tool_use_id: toolUse.id, content: resultContent })
+      } else {
+        toolResults.push({
+          type: 'tool_result',
+          tool_use_id: toolUse.id,
+          content: `Unknown tool: "${toolUse.name}". Available tools: read_abc, generate_music.`,
+        })
       }
     }
 
