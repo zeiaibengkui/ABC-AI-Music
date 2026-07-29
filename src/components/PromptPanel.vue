@@ -8,6 +8,7 @@ const store = useMusicStore()
 const showThinking = ref(false)
 const showChat = ref(false)
 const showHistory = ref(false)
+const chatListRef = ref<HTMLDivElement>()
 
 // Auto-expand chat and thinking when generation starts
 watch(() => store.isLoading, (val) => {
@@ -15,6 +16,13 @@ watch(() => store.isLoading, (val) => {
     showChat.value = true
     showThinking.value = true
   }
+})
+
+// Auto-scroll chat to bottom on new messages
+watch(() => store.conversation.length, () => {
+  setTimeout(() => {
+    chatListRef.value?.scrollTo({ top: chatListRef.value.scrollHeight, behavior: 'smooth' })
+  }, 100)
 })
 
 function handleKeydown(e: KeyboardEvent) {
@@ -79,7 +87,7 @@ function isVisible(msg: Message): boolean {
         <span class="chat-badge">{{store.conversation.filter(m => m.role === 'user').length}}</span>
       </button>
       <BCollapse :visible="showChat">
-        <div class="d-flex flex-column gap-2 chat-list overflow-y-auto" style="max-height: 360px;">
+        <div ref="chatListRef" class="d-flex flex-column gap-2 chat-list overflow-y-auto" style="max-height: 360px;">
           <template v-for="(msg, i) in store.conversation" :key="i">
             <div v-if="isVisible(msg)" :class="msg.role === 'user' ? 'chat-user' : 'chat-assistant'">
               <div class="chat-role">{{ msg.role === 'user' ? 'You' : 'AI' }}</div>
