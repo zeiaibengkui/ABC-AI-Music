@@ -1,14 +1,5 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
-import {
-  BButton,
-  BFormTextarea,
-  BSpinner,
-  BListGroup,
-  BListGroupItem,
-  BCollapse,
-  BButtonGroup,
-} from 'bootstrap-vue-next';
 import { useMusicStore } from '../stores/music';
 import type { ContentBlock, Message } from '../composables/useAiGenerator';
 

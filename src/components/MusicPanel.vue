@@ -2,7 +2,6 @@
 import { ref, watch, onMounted, nextTick, onUnmounted } from 'vue';
 import abcjs from 'abcjs';
 import 'abcjs/abcjs-audio.css';
-import { BCollapse, BButton, BButtonGroup } from 'bootstrap-vue-next';
 import { useMusicStore } from '../stores/music';
 
 const store = useMusicStore();
@@ -185,33 +184,24 @@ function downloadMidi() {
   <main class="d-flex flex-column gap-3 p-4 h-100 overflow-y-auto bg-body">
     <template v-if="store.hasNotation">
       <div class="flex-fill d-flex flex-column align-items-center p-3 sheet-area overflow-auto">
-        <div ref="notationRef" class="w-100" style="max-width: 760px"></div>
 
         <!-- Volume control -->
-        <div class="volume-row w-100 mt-3 d-flex align-items-center gap-2" style="max-width: 760px">
-          <FontAwesomeIcon
-            :icon="volume === 0 ? 'volume-mute' : 'volume-up'"
-            class="text-body-secondary flex-shrink-0"
-            size="sm"
-          />
-          <input
-            type="range"
-            class="form-range flex-fill"
-            min="0"
-            max="1"
-            step="0.01"
-            :value="volume"
-            @input="setVolume(($event.target as HTMLInputElement).valueAsNumber)"
-          />
-          <span
-            class="text-body-secondary small flex-shrink-0"
-            style="min-width: 2.5rem; text-align: right"
-          >
-            {{ Math.round(volume * 100) }}%
-          </span>
-        </div>
+        <Brow>
+          <div class="col-8 volume-row w-100 mt-3 d-flex align-items-center gap-2" style="max-width: 760px">
+            <FontAwesomeIcon :icon="volume === 0 ? 'volume-mute' : 'volume-up'"
+              class="text-body-secondary flex-shrink-0" size="sm" />
+            <input type="range" class="form-range flex-fill" min="0" max="1" step="0.01" :value="volume"
+              @input="setVolume(($event.target as HTMLInputElement).valueAsNumber)" />
+            <span class="text-body-secondary small flex-shrink-0" style="min-width: 2.5rem; text-align: right">
+              {{ Math.round(volume * 100) }}%
+            </span>
+          </div>
+          <div ref="audioRef" class="col-4 audio-controls w-100 mt-2" style="max-width: 760px"></div>
+        </Brow>
 
-        <div ref="audioRef" class="audio-controls w-100 mt-2" style="max-width: 760px"></div>
+        <div ref="notationRef" class="w-100" style="max-width: 760px"></div>
+
+
 
         <!-- Render error display -->
         <div v-if="renderError" class="render-error w-100 mt-2" style="max-width: 760px">
@@ -222,11 +212,7 @@ function downloadMidi() {
 
       <div class="d-flex gap-2 align-items-start flex-wrap">
         <BButtonGroup size="sm">
-          <BButton
-            variant="outline-secondary"
-            :pressed="showNotation"
-            @click="showNotation = !showNotation"
-          >
+          <BButton variant="outline-secondary" :pressed="showNotation" @click="showNotation = !showNotation">
             <FontAwesomeIcon icon="code" class="me-1" />
             {{ showNotation ? 'Hide Notation' : 'Show Notation' }}
           </BButton>
@@ -244,19 +230,14 @@ function downloadMidi() {
       </div>
 
       <BCollapse :visible="showNotation">
-        <textarea
-          v-model="store.abcNotation"
-          class="notation-text w-100 p-3 mb-0 border rounded"
-          rows="16"
-          @blur="commitAbcEdit"
-        ></textarea>
+        <textarea v-model="store.abcNotation" class="notation-text w-100 p-3 mb-0 border rounded" rows="16"
+          @blur="commitAbcEdit"></textarea>
       </BCollapse>
     </template>
 
     <template v-else>
       <div
-        class="flex-fill d-flex flex-column align-items-center justify-content-center gap-2 text-center text-body-secondary"
-      >
+        class="flex-fill d-flex flex-column align-items-center justify-content-center gap-2 text-center text-body-secondary">
         <FontAwesomeIcon icon="music" size="3x" class="mb-2 text-body-secondary" />
         <p class="h6 mb-0 text-body">No music yet</p>
         <p class="small mb-0" style="max-width: 280px">

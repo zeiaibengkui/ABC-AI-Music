@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { watch } from 'vue';
-import { BApp, BButton } from 'bootstrap-vue-next';
 import { useMusicStore } from './stores/music';
 import PromptPanel from './components/PromptPanel.vue';
 import MusicPanel from './components/MusicPanel.vue';
