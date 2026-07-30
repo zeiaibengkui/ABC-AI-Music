@@ -186,7 +186,7 @@ function downloadMidi() {
       <div class="flex-fill d-flex flex-column align-items-center p-3 sheet-area overflow-auto">
 
         <!-- Audio control -->
-        <div class="row w-100 align-items-center">
+        <div class="row w-100 align-items-center sticky-topbg-body">
           <div ref="audioRef" class="col-8 audio-controls"></div>
           <!--volume-->
           <div class="col-4 volume-row d-flex  gap-2">
