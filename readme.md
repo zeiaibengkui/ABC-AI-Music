@@ -19,6 +19,11 @@ K:Dmin
 "Dm"F2A2 "A7"d2c2 | "Bbmaj7"B2d2 "E°"f2e2 | "A"e2c2 "Dm"a4- | a8 |]
 ```
 
+## Usability
+
+AI can process easy pieces, that said, it cannot handle even a complex rhythm.
+So you'd better do things yourself, shouldn't you?
+
 ## Run
 
 1. pnpm install
