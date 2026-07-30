@@ -28,7 +28,7 @@ Rules for ABC notation inside the generate_music tool:
   * %%MIDI drumon / %%MIDI drumoff — toggle drums
 - Choose instruments and patterns that fit the described mood and genre.
 
-After generating music, briefly describe what you created — mention the key, style, instruments, and anything interesting about the piece.`
+After generating music, briefly describe what you created — mention the key, style, instruments, and anything interesting about the piece.`;
 
 const TOOLS = [
   {
@@ -45,11 +45,13 @@ const TOOLS = [
         },
         start_bar: {
           type: 'integer',
-          description: 'Optional. Starting bar number (1-based). If omitted, starts from the beginning.',
+          description:
+            'Optional. Starting bar number (1-based). If omitted, starts from the beginning.',
         },
         end_bar: {
           type: 'integer',
-          description: 'Optional. Ending bar number (1-based, inclusive). If omitted, reads to the end.',
+          description:
+            'Optional. Ending bar number (1-based, inclusive). If omitted, reads to the end.',
         },
       },
       required: [],
@@ -79,90 +81,88 @@ const TOOLS = [
         },
         end_bar: {
           type: 'integer',
-          description:
-            'Optional. Ending bar number (1-based, inclusive) for the edited section.',
+          description: 'Optional. Ending bar number (1-based, inclusive) for the edited section.',
         },
         comment: {
           type: 'string',
-          description:
-            'Optional. Brief description of what was changed, for display to the user.',
+          description: 'Optional. Brief description of what was changed, for display to the user.',
         },
       },
       required: ['abc_notation'],
     },
   },
-]
+];
 
 // ── Read-before-write enforcement ───────────────────────
 
-let readSinceLastWrite = true // starts true so first write is allowed
+let readSinceLastWrite = true; // starts true so first write is allowed
 
 /** Check whether the conversation already contains generated music. */
 function hasExistingMusic(messages: Message[]): boolean {
   return messages.some((m) => {
-    if (m.role !== 'assistant' || typeof m.content === 'string') return false
+    if (m.role !== 'assistant' || typeof m.content === 'string') return false;
     return (m.content as ContentBlock[]).some(
       (b) => b.type === 'tool_use' && b.name === 'generate_music',
-    )
-  })
+    );
+  });
 }
 
 /** Extract the most recent ABC notation from the conversation's tool calls. */
 function getExistingAbc(messages: Message[]): string | null {
   for (let i = messages.length - 1; i >= 0; i--) {
-    const m = messages[i]!
-    if (m.role !== 'assistant' || typeof m.content === 'string') continue
-    const blocks = m.content as ContentBlock[]
+    const m = messages[i]!;
+    if (m.role !== 'assistant' || typeof m.content === 'string') continue;
+    const blocks = m.content as ContentBlock[];
     for (let j = blocks.length - 1; j >= 0; j--) {
-      const b = blocks[j]!
+      const b = blocks[j]!;
       if (b.type === 'tool_use' && b.name === 'generate_music' && b.input?.abc_notation) {
-        return String(b.input.abc_notation)
+        return String(b.input.abc_notation);
       }
     }
   }
-  return null
+  return null;
 }
 
 // ── Public types ────────────────────────────────────────
 
 export interface StreamCallbacks {
-  onThinking: (text: string) => void
-  onTextDelta: (text: string) => void
-  onToolCall: () => void
+  onThinking: (text: string) => void;
+  onTextDelta: (text: string) => void;
+  onToolCall: () => void;
 }
 
 export interface ContentBlock {
-  type: 'text' | 'tool_use' | 'tool_result' | 'thinking' | 'redacted_thinking'
-  text?: string
-  thinking?: string
-  signature?: string
-  id?: string
-  name?: string
-  input?: Record<string, unknown>
-  tool_use_id?: string
-  content?: string
+  type: 'text' | 'tool_use' | 'tool_result' | 'thinking' | 'redacted_thinking';
+  text?: string;
+  thinking?: string;
+  signature?: string;
+  id?: string;
+  name?: string;
+  input?: Record<string, unknown>;
+  tool_use_id?: string;
+  content?: string;
 }
 
 export interface Message {
-  role: 'user' | 'assistant'
-  content: string | ContentBlock[]
+  role: 'user' | 'assistant';
+  content: string | ContentBlock[];
 }
 
 export interface GenerateResult {
   /** Assistant's chat text */
-  text: string
+  text: string;
   /** The raw content blocks for storage in conversation */
-  contentBlocks: ContentBlock[]
+  contentBlocks: ContentBlock[];
   /** Properly structured messages to append to conversation (assistant↔user pairs) */
-  messages: Message[]
+  messages: Message[];
   /** Extracted ABC notation if a tool was called */
-  abcNotation?: string
+  abcNotation?: string;
 }
 
 // ── Composable ──────────────────────────────────────────
 
 export function useAiGenerator() {
-  const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY || ''
+  const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY || '';
 
   /**
    * Streaming generation with tool-use support.
@@ -179,52 +179,55 @@ export function useAiGenerator() {
     toolUses: ContentBlock[],
     allMessages: Message[],
   ): Promise<{
-    toolResults: ContentBlock[]
-    abcNotation?: string
-    hasBlockedTool: boolean
+    toolResults: ContentBlock[];
+    abcNotation?: string;
+    hasBlockedTool: boolean;
   }> {
-    const toolResults: ContentBlock[] = []
-    let abcNotation: string | undefined
-    let hasBlockedTool = false
+    const toolResults: ContentBlock[] = [];
+    let abcNotation: string | undefined;
+    let hasBlockedTool = false;
 
     for (const toolUse of toolUses) {
       if (toolUse.name === 'read_abc') {
-        const existingAbc = getExistingAbc(allMessages)
-        const voice = toolUse.input?.voice ? String(toolUse.input.voice) : null
-        const startBar = toolUse.input?.start_bar ? Number(toolUse.input.start_bar) : null
-        const endBar = toolUse.input?.end_bar ? Number(toolUse.input.end_bar) : null
+        const existingAbc = getExistingAbc(allMessages);
+        const voice = toolUse.input?.voice ? String(toolUse.input.voice) : null;
+        const startBar = toolUse.input?.start_bar ? Number(toolUse.input.start_bar) : null;
+        const endBar = toolUse.input?.end_bar ? Number(toolUse.input.end_bar) : null;
 
-        readSinceLastWrite = true
+        readSinceLastWrite = true;
 
         let result = existingAbc
           ? `Current ABC notation${voice ? ` (voice: ${voice})` : ''}${startBar ? ` [bars ${startBar}${endBar ? `-${endBar}` : '+'}]` : ''}:\n\`\`\`\n${existingAbc}\n\`\`\``
-          : 'No existing music to read. Go ahead and compose a new piece.'
+          : 'No existing music to read. Go ahead and compose a new piece.';
 
         if (voice && existingAbc) {
-          const hasVoice = new RegExp(`V:\\s*${voice.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(existingAbc)
+          const hasVoice = new RegExp(
+            `V:\\s*${voice.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`,
+            'i',
+          ).test(existingAbc);
           if (!hasVoice)
-            result += `\n\nNote: voice "${voice}" does not exist yet. It will be created when you call generate_music.`
+            result += `\n\nNote: voice "${voice}" does not exist yet. It will be created when you call generate_music.`;
         }
 
-        toolResults.push({ type: 'tool_result', tool_use_id: toolUse.id, content: result })
+        toolResults.push({ type: 'tool_result', tool_use_id: toolUse.id, content: result });
       } else if (toolUse.name === 'generate_music') {
         if (!readSinceLastWrite && hasExistingMusic(allMessages)) {
-          hasBlockedTool = true
+          hasBlockedTool = true;
           toolResults.push({
             type: 'tool_result',
             tool_use_id: toolUse.id,
             content:
               'BLOCKED: You must call read_abc to view the current notation before editing. Please call read_abc first, review the current ABC, then call generate_music with your changes.',
-          })
-          continue
+          });
+          continue;
         }
 
-        const abc = String(toolUse.input?.abc_notation ?? '')
-        const voice = toolUse.input?.voice ? String(toolUse.input.voice) : null
-        const comment = toolUse.input?.comment ? String(toolUse.input.comment) : null
+        const abc = String(toolUse.input?.abc_notation ?? '');
+        const voice = toolUse.input?.voice ? String(toolUse.input.voice) : null;
+        const comment = toolUse.input?.comment ? String(toolUse.input.comment) : null;
 
         // Validate and report errors — let the AI fix them step by step
-        const errors = await validateAbc(abc)
+        const errors = await validateAbc(abc);
 
         if (errors.length > 0) {
           // Don't accept the broken notation — report errors so the AI can fix them
@@ -235,30 +238,30 @@ export function useAiGenerator() {
               `❌ Validation failed. Fix these issues and call generate_music again:\n` +
               errors.map((e) => `- ${e}`).join('\n') +
               `\n\nYour ABC that needs fixing:\n\`\`\`\n${abc}\n\`\`\``,
-          })
+          });
           // Keep readSinceLastWrite unchanged — the AI hasn't successfully written yet
-          continue
+          continue;
         }
 
         // ABC is valid — accept it
-        readSinceLastWrite = false
-        abcNotation = abc
+        readSinceLastWrite = false;
+        abcNotation = abc;
 
-        let resultContent = '✅ Music generated successfully.'
-        if (voice) resultContent += ` Voice: ${voice}.`
-        if (comment) resultContent += ` ${comment}`
+        let resultContent = '✅ Music generated successfully.';
+        if (voice) resultContent += ` Voice: ${voice}.`;
+        if (comment) resultContent += ` ${comment}`;
 
-        toolResults.push({ type: 'tool_result', tool_use_id: toolUse.id, content: resultContent })
+        toolResults.push({ type: 'tool_result', tool_use_id: toolUse.id, content: resultContent });
       } else {
         toolResults.push({
           type: 'tool_result',
           tool_use_id: toolUse.id,
           content: `Unknown tool: "${toolUse.name}". Available tools: read_abc, generate_music.`,
-        })
+        });
       }
     }
 
-    return { toolResults, abcNotation, hasBlockedTool }
+    return { toolResults, abcNotation, hasBlockedTool };
   }
 
   async function generateStream(
@@ -266,79 +269,76 @@ export function useAiGenerator() {
     callbacks: StreamCallbacks,
   ): Promise<GenerateResult> {
     if (!apiKey) {
-      console.warn('No API key set — using mock generation')
-      return mockGenerate(messages, callbacks)
+      console.warn('No API key set — using mock generation');
+      return mockGenerate(messages, callbacks);
     }
 
-    let allText = ''
-    const allContentBlocks: ContentBlock[] = []
-    let finalAbcNotation: string | undefined
-    let currentMessages = messages
+    let allText = '';
+    const allContentBlocks: ContentBlock[] = [];
+    let finalAbcNotation: string | undefined;
+    let currentMessages = messages;
 
     // Multi-round tool loop: keep going while the AI calls tools
-    const newMessages: Message[] = []
+    const newMessages: Message[] = [];
 
     for (let round = 0; round < 4; round++) {
-      const isToolResult = round > 0
-      const response = await streamApiCall(currentMessages, isToolResult, callbacks)
+      const isToolResult = round > 0;
+      const response = await streamApiCall(currentMessages, isToolResult, callbacks);
 
-      allText += (allText ? ' ' : '') + response.text
-      allContentBlocks.push(...response.contentBlocks)
+      allText += (allText ? ' ' : '') + response.text;
+      allContentBlocks.push(...response.contentBlocks);
 
-      const toolUses = response.contentBlocks.filter((b) => b.type === 'tool_use')
+      const toolUses = response.contentBlocks.filter((b) => b.type === 'tool_use');
       if (toolUses.length === 0) {
         // Final text response — store as assistant message
         if (response.contentBlocks.length > 0) {
-          newMessages.push({ role: 'assistant' as const, content: response.contentBlocks })
+          newMessages.push({ role: 'assistant' as const, content: response.contentBlocks });
         }
-        break
+        break;
       }
 
-      const { toolResults, abcNotation, hasBlockedTool } = await executeTools(
-        toolUses,
-        messages,
-      )
+      const { toolResults, abcNotation, hasBlockedTool } = await executeTools(toolUses, messages);
 
-      if (abcNotation) finalAbcNotation = abcNotation
-      allContentBlocks.push(...toolResults)
+      if (abcNotation) finalAbcNotation = abcNotation;
+      allContentBlocks.push(...toolResults);
 
       // Store this round: assistant (text + tool_use) → user (tool_result)
-      newMessages.push({ role: 'assistant' as const, content: response.contentBlocks })
-      newMessages.push({ role: 'user' as const, content: toolResults })
+      newMessages.push({ role: 'assistant' as const, content: response.contentBlocks });
+      newMessages.push({ role: 'user' as const, content: toolResults });
 
       // Build next round messages
       currentMessages = [
         ...currentMessages,
         { role: 'assistant' as const, content: response.contentBlocks },
         { role: 'user' as const, content: toolResults },
-      ]
+      ];
 
       // If a tool was blocked or read-only, continue to next round
-      if (!hasBlockedTool && !toolUses.some((tu) => tu.name === 'read_abc')) break
+      if (!hasBlockedTool && !toolUses.some((tu) => tu.name === 'read_abc')) break;
     }
 
     // Reorder for DeepSeek compatibility (flat view)
-    const textBlocks = allContentBlocks.filter((b) => b.type === 'text')
-    const toolBlocks = allContentBlocks.filter((b) => b.type === 'tool_use')
-    const resultBlocks = allContentBlocks.filter((b) => b.type === 'tool_result')
+    const textBlocks = allContentBlocks.filter((b) => b.type === 'text');
+    const toolBlocks = allContentBlocks.filter((b) => b.type === 'tool_use');
+    const resultBlocks = allContentBlocks.filter((b) => b.type === 'tool_result');
 
     return {
       text: allText.trim(),
       contentBlocks: [...textBlocks, ...toolBlocks, ...resultBlocks],
       messages: newMessages,
       abcNotation: finalAbcNotation,
-    }
+    };
   }
 
   function resetReadLock() {
-    readSinceLastWrite = true
+    readSinceLastWrite = true;
   }
 
   function requireRead() {
-    readSinceLastWrite = false
+    readSinceLastWrite = false;
   }
 
-  return { generateStream, resetReadLock, requireRead }
+  return { generateStream, resetReadLock, requireRead };
 }
 
 // ── Core streaming call ─────────────────────────────────
@@ -348,9 +348,9 @@ async function streamApiCall(
   isToolResult: boolean,
   callbacks: StreamCallbacks,
 ): Promise<{ text: string; contentBlocks: ContentBlock[] }> {
-  const baseUrl = import.meta.env.VITE_ANTHROPIC_BASE_URL || 'https://api.anthropic.com'
-  const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY || ''
-  const model = import.meta.env.VITE_ANTHROPIC_MODEL || 'claude-sonnet-5'
+  const baseUrl = import.meta.env.VITE_ANTHROPIC_BASE_URL || 'https://api.anthropic.com';
+  const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY || '';
+  const model = import.meta.env.VITE_ANTHROPIC_MODEL || 'claude-sonnet-5';
 
   const response = await fetch(`${baseUrl}/v1/messages`, {
     method: 'POST',
@@ -369,81 +369,81 @@ async function streamApiCall(
       tools: TOOLS,
       messages,
     }),
-  })
+  });
 
   if (!response.ok) {
-    const err = await response.text()
-    throw new Error(`API error ${response.status}: ${err}`)
+    const err = await response.text();
+    throw new Error(`API error ${response.status}: ${err}`);
   }
 
-  const reader = response.body?.getReader()
-  if (!reader) throw new Error('No response body')
+  const reader = response.body?.getReader();
+  if (!reader) throw new Error('No response body');
 
-  const decoder = new TextDecoder()
-  let buffer = ''
+  const decoder = new TextDecoder();
+  let buffer = '';
 
   // Accumulate content blocks from the stream
-  const blocks: Map<number, ContentBlock> = new Map()
-  let textResult = ''
-  let toolJsonBuffer = ''
+  const blocks: Map<number, ContentBlock> = new Map();
+  let textResult = '';
+  let toolJsonBuffer = '';
 
   while (true) {
-    const { done, value } = await reader.read()
-    if (done) break
+    const { done, value } = await reader.read();
+    if (done) break;
 
-    buffer += decoder.decode(value, { stream: true })
-    const lines = buffer.split('\n')
-    buffer = lines.pop() || ''
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop() || '';
 
     for (const line of lines) {
-      if (!line.startsWith('data: ')) continue
-      const data = line.slice(6).trim()
-      if (!data) continue
+      if (!line.startsWith('data: ')) continue;
+      const data = line.slice(6).trim();
+      if (!data) continue;
 
       try {
-        const event = JSON.parse(data)
+        const event = JSON.parse(data);
 
         // --- content_block_start ---
         if (event.type === 'content_block_start') {
-          const block = event.content_block
+          const block = event.content_block;
           if (block) {
-            blocks.set(event.index, { ...block })
+            blocks.set(event.index, { ...block });
             if (block.type === 'tool_use') {
-              toolJsonBuffer = ''
-              callbacks.onToolCall()
+              toolJsonBuffer = '';
+              callbacks.onToolCall();
             }
           }
         }
 
         // --- content_block_delta ---
         if (event.type === 'content_block_delta') {
-          const delta = event.delta
-          if (!delta) continue
+          const delta = event.delta;
+          if (!delta) continue;
 
           if (delta.type === 'thinking_delta' && delta.thinking) {
-            callbacks.onThinking(delta.thinking)
+            callbacks.onThinking(delta.thinking);
           } else if (delta.type === 'text_delta' && delta.text) {
-            textResult += delta.text
-            callbacks.onTextDelta(delta.text)
+            textResult += delta.text;
+            callbacks.onTextDelta(delta.text);
             // Write the accumulated text back into the block
-            const textBlock = blocks.get(event.index)
+            const textBlock = blocks.get(event.index);
             if (textBlock && textBlock.type === 'text') {
-              textBlock.text = (textBlock.text || '') + delta.text
+              textBlock.text = (textBlock.text || '') + delta.text;
             }
           } else if (delta.type === 'input_json_delta' && delta.partial_json) {
-            toolJsonBuffer += delta.partial_json
+            toolJsonBuffer += delta.partial_json;
           }
         }
 
         // --- content_block_stop ---
         if (event.type === 'content_block_stop') {
-          const block = blocks.get(event.index)
+          const block = blocks.get(event.index);
           if (block?.type === 'tool_use' && toolJsonBuffer) {
             try {
-              block.input = JSON.parse(toolJsonBuffer)
+              block.input = JSON.parse(toolJsonBuffer);
             } catch {
               // If JSON is incomplete, store what we have
-              block.input = {}
+              block.input = {};
             }
           }
         }
@@ -460,59 +460,60 @@ async function streamApiCall(
   // they are AI-internal reasoning, not part of the conversation.
   const contentBlocks: ContentBlock[] = Array.from(blocks.values()).filter(
     (b) => b.type !== 'thinking' && b.type !== 'redacted_thinking',
-  )
+  );
 
-  return { text: textResult.trim(), contentBlocks }
+  return { text: textResult.trim(), contentBlocks };
 }
 
 // ── Validation ──────────────────────────────────────────
 
 async function validateAbc(abc: string): Promise<string[]> {
-  const errors: string[] = []
-  const stripped = stripMarkdownFences(abc)
+  const errors: string[] = [];
+  const stripped = stripMarkdownFences(abc);
 
   // Structural checks
-  if (!/^X:\s*\d+/m.test(stripped)) errors.push('Missing X: (reference number) header')
-  if (!/^K:\s*[A-Ga-g]/m.test(stripped)) errors.push('Missing K: (key signature) header')
-  if (!/^M:\s*\d+\/\d+/m.test(stripped))
-    errors.push('Missing M: (meter / time signature) header')
+  if (!/^X:\s*\d+/m.test(stripped)) errors.push('Missing X: (reference number) header');
+  if (!/^K:\s*[A-Ga-g]/m.test(stripped)) errors.push('Missing K: (key signature) header');
+  if (!/^M:\s*\d+\/\d+/m.test(stripped)) errors.push('Missing M: (meter / time signature) header');
 
   const afterHeaders = stripped
     .split('\n')
     .filter((l) => !/^[A-Za-z]:\s/.test(l))
-    .join('\n')
-  if (!/[A-Ga-g][',]*/.test(afterHeaders)) errors.push('No note pitches found')
-  if (!/[|:]/.test(afterHeaders)) errors.push('No bar lines (|) found')
+    .join('\n');
+  if (!/[A-Ga-g][',]*/.test(afterHeaders)) errors.push('No note pitches found');
+  if (!/[|:]/.test(afterHeaders)) errors.push('No bar lines (|) found');
 
-  const quoteCount = (stripped.match(/"/g) || []).length
-  if (quoteCount % 2 !== 0) errors.push('Unclosed double-quote in chord symbols')
+  const quoteCount = (stripped.match(/"/g) || []).length;
+  if (quoteCount % 2 !== 0) errors.push('Unclosed double-quote in chord symbols');
 
   // Use abcjs parser for deeper validation
   try {
-    const { default: abcjs } = await import('abcjs')
-    abcjs.parseOnly(stripped)
+    const { default: abcjs } = await import('abcjs');
+    abcjs.parseOnly(stripped);
   } catch (e) {
     // Dynamic import failed or parseOnly threw
     // Only report parse errors (not module load errors)
-    const msg = e instanceof Error ? e.message : String(e)
+    const msg = e instanceof Error ? e.message : String(e);
     const isParseError =
-      msg.includes('line') || msg.includes('column') ||
-      msg.includes('expected') || msg.includes('unexpected') ||
-      msg.includes('Unexpected')
+      msg.includes('line') ||
+      msg.includes('column') ||
+      msg.includes('expected') ||
+      msg.includes('unexpected') ||
+      msg.includes('Unexpected');
     if (isParseError) {
-      errors.push(`Parse error: ${msg}`)
+      errors.push(`Parse error: ${msg}`);
     }
     // Module load failures are silently ignored — regex checks above are sufficient
   }
 
-  return errors
+  return errors;
 }
 
 function stripMarkdownFences(text: string): string {
   return text
     .replace(/^```(?:abc)?\s*\n?/i, '')
     .replace(/\n?```\s*$/i, '')
-    .trim()
+    .trim();
 }
 
 // ── Mock fallback ───────────────────────────────────────
@@ -521,54 +522,66 @@ async function mockGenerate(
   messages: Message[],
   callbacks: StreamCallbacks,
 ): Promise<GenerateResult> {
-  const lastUserMsg = [...messages].reverse().find((m) => m.role === 'user')
-  const prompt = typeof lastUserMsg?.content === 'string' ? lastUserMsg.content : ''
-  const lower = prompt.toLowerCase()
-  const existingAbc = getExistingAbc(messages)
+  const lastUserMsg = [...messages].reverse().find((m) => m.role === 'user');
+  const prompt = typeof lastUserMsg?.content === 'string' ? lastUserMsg.content : '';
+  const lower = prompt.toLowerCase();
+  const existingAbc = getExistingAbc(messages);
 
   const tunes: Record<string, string> = {
     waltz: `X:1\nT:Generated Waltz\nM:3/4\nL:1/4\nK:Em\n%%MIDI program 40\n%%MIDI chordprog 24\n%%MIDI gchord f8\n|:"Em" E2 G B | "Am" A2 c e | "D" d2 B A | "G" G2 F# E | "Em" E2 G B | "Am" A c e | "B7" ^D2 ^F A | "Em" E6 :|\n|:"C" E2 G c | "G" B2 G B | "Am" A2 c e | "Em" G2 E G | "C" E G c e | "G" B G B d | "B7" ^F A ^d f | "Em" E6 :|`,
     jig: `X:1\nT:Generated Jig\nM:6/8\nL:1/8\nK:D\n%%MIDI program 73\n%%MIDI chordprog 25\n%%MIDI gchord s8\n|:"D" A2 F D2 F | A2 d f2 d | "G" B2 G D2 G | B2 d g2 f | "D" a2 f d2 f | "A" e2 c A2 c | "D" d3 "A" e3 | "D" d6 :|\n|:"G" B2 G d2 B | g2 d B2 G | "D" A2 F d2 A | f2 d A2 F | "G" g2 f "D" f2 e | "A" e2 d c2 B |1 "D" A3 B3 | A6 :|2 "D" A2 B c2 e | d6 |`,
     blues: `X:1\nT:Generated Blues\nM:4/4\nL:1/8\nK:C\n%%MIDI program 56\n%%MIDI chordprog 0\n%%MIDI gchord\n|:"C7" C2 E G c2 e- | e2 d c2 _B G2 | "F7" F2 A c f2 a- | a2 g f2 A c2 | "C7" C2 E G c2 e- | e d c B G2 |\nw:Walk-in' down that lone-ly road\n|"G7" G,2 B, D G2 F | "F7" F A c f a2 g | "C7" C2 E G c2 B | "G7" G2 B d f2 d | "C7" c8 :|`,
     lullaby: `X:1\nT:Generated Lullaby\nM:3/4\nL:1/4\nK:F\n%%MIDI program 0\n%%MIDI chordprog 48\n%%MIDI gchord\n|:"F" c2 A | F2 G | A2 c | "Bb" d3 | "C7" B2 G | E2 F | G2 B | "F" c3 |\nw:Hush now, close your eyes\n|"Am" A2 F | "Dm" d2 c | "Gm" B2 G | "C7" G3 | "F" A2 G | "Bb" F2 E | "C7" G2 B | "F" F6 :|`,
-  }
+  };
 
-  const entry = Object.entries(tunes).find(([k]) => lower.includes(k))
-  let abc = entry?.[1] ?? tunes.blues
+  const entry = Object.entries(tunes).find(([k]) => lower.includes(k));
+  let abc = entry?.[1] ?? tunes.blues;
 
   // If modifying existing music, tweak the existing ABC
-  const isModify = existingAbc && /\b(slower|faster|sadder|happier|change|modify|add|remove|edit|update|make it|turn|waltz|minor|major|key|tempo|voice|instrument)\b/.test(lower)
+  const isModify =
+    existingAbc &&
+    /\b(slower|faster|sadder|happier|change|modify|add|remove|edit|update|make it|turn|waltz|minor|major|key|tempo|voice|instrument)\b/.test(
+      lower,
+    );
   if (isModify && existingAbc) {
     // Simulate read_abc first
-    callbacks.onThinking('Reading current notation before editing…\n')
-    await sleep(200)
+    callbacks.onThinking('Reading current notation before editing…\n');
+    await sleep(200);
 
     const readBlocks: ContentBlock[] = [
       { type: 'tool_use', id: 'mock_read_001', name: 'read_abc', input: {} },
-    ]
+    ];
     const readResult: ContentBlock = {
       type: 'tool_result',
       tool_use_id: 'mock_read_001',
       content: `Current ABC notation:\n\`\`\`\n${existingAbc}\n\`\`\``,
-    }
+    };
 
     // Modify: change tempo (Q:) and tweak the title
-    abc = existingAbc.replace(/Q:1\/4=\d+/, lower.includes('slower') ? 'Q:1/4=80' : 'Q:1/4=200')
-    abc = abc.replace(/T:[^\n]+/, `T:${existingAbc.match(/T:([^\n]+)/)?.[1] ?? 'Piece'} (modified)`)
+    abc = existingAbc.replace(/Q:1\/4=\d+/, lower.includes('slower') ? 'Q:1/4=80' : 'Q:1/4=200');
+    abc = abc.replace(
+      /T:[^\n]+/,
+      `T:${existingAbc.match(/T:([^\n]+)/)?.[1] ?? 'Piece'} (modified)`,
+    );
 
-    callbacks.onToolCall()
-    await sleep(200)
+    callbacks.onToolCall();
+    await sleep(200);
 
     const genBlocks: ContentBlock[] = [
-      { type: 'tool_use', id: 'mock_gen_001', name: 'generate_music', input: { abc_notation: abc, comment: 'Mock: applied modifications.' } },
-    ]
+      {
+        type: 'tool_use',
+        id: 'mock_gen_001',
+        name: 'generate_music',
+        input: { abc_notation: abc, comment: 'Mock: applied modifications.' },
+      },
+    ];
     const genResult: ContentBlock = {
       type: 'tool_result',
       tool_use_id: 'mock_gen_001',
       content: '✅ Music generated successfully. Mock: modifications applied.',
-    }
+    };
 
-    const allBlocks = [...readBlocks, readResult, ...genBlocks, genResult]
+    const allBlocks = [...readBlocks, readResult, ...genBlocks, genResult];
 
     return {
       text: 'Let me read the current notation first, then apply your changes.',
@@ -580,29 +593,33 @@ async function mockGenerate(
         { role: 'user' as const, content: [genResult] },
       ],
       abcNotation: abc,
-    }
+    };
   }
 
   // New composition
-  const chatText = "Here's what I came up with — a piece based on your description."
-  callbacks.onThinking('Analyzing the prompt for musical style, key, and structure…\n')
-  await sleep(300)
-  callbacks.onThinking('Drafting the ABC notation with appropriate voicing…\n')
-  await sleep(200)
+  const chatText = "Here's what I came up with — a piece based on your description.";
+  callbacks.onThinking('Analyzing the prompt for musical style, key, and structure…\n');
+  await sleep(300);
+  callbacks.onThinking('Drafting the ABC notation with appropriate voicing…\n');
+  await sleep(200);
 
   for (const char of chatText) {
-    callbacks.onTextDelta(char)
-    await sleep(10)
+    callbacks.onTextDelta(char);
+    await sleep(10);
   }
 
-  callbacks.onToolCall()
-  await sleep(300)
+  callbacks.onToolCall();
+  await sleep(300);
 
   const contentBlocks: ContentBlock[] = [
     { type: 'text', text: chatText },
     { type: 'tool_use', id: 'mock_tool_001', name: 'generate_music', input: { abc_notation: abc } },
-    { type: 'tool_result', tool_use_id: 'mock_tool_001', content: '✅ Music generated successfully.' },
-  ]
+    {
+      type: 'tool_result',
+      tool_use_id: 'mock_tool_001',
+      content: '✅ Music generated successfully.',
+    },
+  ];
 
   return {
     text: chatText,
@@ -612,9 +629,9 @@ async function mockGenerate(
       { role: 'user' as const, content: [contentBlocks[2]!] },
     ],
     abcNotation: abc,
-  }
+  };
 }
 
 function sleep(ms: number) {
-  return new Promise((r) => setTimeout(r, ms))
+  return new Promise((r) => setTimeout(r, ms));
 }

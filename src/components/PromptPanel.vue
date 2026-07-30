@@ -1,99 +1,128 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
-import { BButton, BFormTextarea, BSpinner, BListGroup, BListGroupItem, BCollapse, BButtonGroup } from 'bootstrap-vue-next'
-import { useMusicStore } from '../stores/music'
-import type { ContentBlock, Message } from '../composables/useAiGenerator'
+import { ref, watch } from 'vue';
+import {
+  BButton,
+  BFormTextarea,
+  BSpinner,
+  BListGroup,
+  BListGroupItem,
+  BCollapse,
+  BButtonGroup,
+} from 'bootstrap-vue-next';
+import { useMusicStore } from '../stores/music';
+import type { ContentBlock, Message } from '../composables/useAiGenerator';
 
-const store = useMusicStore()
-const showThinking = ref(false)
-const showChat = ref(false)
-const showHistory = ref(false)
-const chatListRef = ref<HTMLDivElement>()
+const store = useMusicStore();
+const showThinking = ref(false);
+const showChat = ref(false);
+const showHistory = ref(false);
+const chatListRef = ref<HTMLDivElement>();
 
 // Auto-expand chat and thinking when generation starts
-watch(() => store.isLoading, (val) => {
-  if (val) {
-    showChat.value = true
-    showThinking.value = true
-  }
-})
+watch(
+  () => store.isLoading,
+  (val) => {
+    if (val) {
+      showChat.value = true;
+      showThinking.value = true;
+    }
+  },
+);
 
 // Auto-expand and scroll chat when conversation changes (e.g. history selected)
-watch(() => store.conversation.length, (len) => {
-  if (len > 0) showChat.value = true
-  setTimeout(() => {
-    chatListRef.value?.scrollTo({ top: chatListRef.value.scrollHeight, behavior: 'smooth' })
-  }, 100)
-})
+watch(
+  () => store.conversation.length,
+  (len) => {
+    if (len > 0) showChat.value = true;
+    setTimeout(() => {
+      chatListRef.value?.scrollTo({ top: chatListRef.value.scrollHeight, behavior: 'smooth' });
+    }, 100);
+  },
+);
 
 function handleKeydown(e: KeyboardEvent) {
   if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
-    store.generate()
+    store.generate();
   }
 }
 
 /** Extract display text from a message (handles both string and ContentBlock[] formats). */
 function msgText(msg: Message): string {
-  if (typeof msg.content === 'string') return msg.content
+  if (typeof msg.content === 'string') return msg.content;
   return msg.content
     .filter((b) => b.type === 'text')
     .map((b) => b.text)
-    .join('\n')
+    .join('\n');
 }
 
 /** Check if a message contains a tool_use block. */
 function hasToolCall(msg: Message): boolean {
-  if (typeof msg.content === 'string') return false
-  return msg.content.some((b) => b.type === 'tool_use')
+  if (typeof msg.content === 'string') return false;
+  return msg.content.some((b) => b.type === 'tool_use');
 }
 
 /** Find the tool_result that follows a tool_use message, by looking at the next user message. */
 function getToolResult(i: number): string {
-  const next = store.conversation[i + 1]
-  if (!next || next.role !== 'user' || typeof next.content === 'string') return ''
+  const next = store.conversation[i + 1];
+  if (!next || next.role !== 'user' || typeof next.content === 'string') return '';
   return (next.content as ContentBlock[])
     .filter((b) => b.type === 'tool_result')
     .map((b) => b.content)
-    .join('\n')
+    .join('\n');
 }
 
 /** Whether tool result indicates an error. */
 function toolHasError(result: string): boolean {
-  return result.includes('❌') || result.includes('BLOCKED') || result.includes('⚠')
+  return result.includes('❌') || result.includes('BLOCKED') || result.includes('⚠');
 }
 
 /** Whether to show this message in the chat (hide tool_result user messages). */
 function isVisible(msg: Message): boolean {
   if (msg.role === 'user' && typeof msg.content !== 'string') {
-    const all = msg.content as ContentBlock[]
-    if (all.every((b) => b.type === 'tool_result')) return false
+    const all = msg.content as ContentBlock[];
+    if (all.every((b) => b.type === 'tool_result')) return false;
   }
-  return true
+  return true;
 }
 </script>
 
 <template>
-  <aside class="d-flex flex-column gap-3 p-4 h-100 border-end  overflow-y-auto">
-
-
-
+  <aside class="d-flex flex-column gap-3 p-4 h-100 border-end overflow-y-auto">
     <!-- Chat history + live streaming message -->
-    <div v-if="store.conversation.length || store.isLoading" class="d-flex flex-column-reverse gap-2 overflow-auto"
-      style="min-height: 0;">
+    <div
+      v-if="store.conversation.length || store.isLoading"
+      class="d-flex flex-column-reverse gap-2 overflow-auto"
+      style="min-height: 0"
+    >
       <button class="chat-toggle" @click="showChat = !showChat">
-        <span class="text-uppercase fw-semibold text-body-secondary"
-          style="font-size: 0.6875rem; letter-spacing: 0.12em;">
+        <span
+          class="text-uppercase fw-semibold text-body-secondary"
+          style="font-size: 0.6875rem; letter-spacing: 0.12em"
+        >
           {{ showChat ? '▾' : '▸' }} Chat
         </span>
-        <span class="chat-badge">{{store.conversation.filter(m => m.role === 'user').length}}</span>
+        <span class="chat-badge">{{
+          store.conversation.filter((m) => m.role === 'user').length
+        }}</span>
       </button>
       <BCollapse :visible="showChat">
-        <div ref="chatListRef" class="d-flex flex-column gap-2 chat-list overflow-y-auto" style="max-height: 360px;">
+        <div
+          ref="chatListRef"
+          class="d-flex flex-column gap-2 chat-list overflow-y-auto"
+          style="max-height: 360px"
+        >
           <template v-for="(msg, i) in store.conversation" :key="i">
-            <div v-if="isVisible(msg)" :class="msg.role === 'user' ? 'chat-user' : 'chat-assistant'">
+            <div
+              v-if="isVisible(msg)"
+              :class="msg.role === 'user' ? 'chat-user' : 'chat-assistant'"
+            >
               <div class="chat-role">{{ msg.role === 'user' ? 'You' : 'AI' }}</div>
               <div v-if="msgText(msg)" class="chat-content">{{ msgText(msg) }}</div>
-              <div v-if="hasToolCall(msg)" class="chat-toolcall" :class="{ 'tool-error': toolHasError(getToolResult(i)) }">
+              <div
+                v-if="hasToolCall(msg)"
+                class="chat-toolcall"
+                :class="{ 'tool-error': toolHasError(getToolResult(i)) }"
+              >
                 {{ toolHasError(getToolResult(i)) ? '❌ Generation failed' : '🎵 Generated music' }}
                 <pre v-if="getToolResult(i)" class="tool-result-text">{{ getToolResult(i) }}</pre>
               </div>
@@ -115,8 +144,10 @@ function isVisible(msg: Message): boolean {
               <BSpinner small class="text-success me-1" />
               Generating music…
             </div>
-            <div v-if="!store.streamingText && !store.isCallingTool && !store.thinking"
-              class="chat-content text-body-secondary">
+            <div
+              v-if="!store.streamingText && !store.isCallingTool && !store.thinking"
+              class="chat-content text-body-secondary"
+            >
               Thinking…
             </div>
           </div>
@@ -124,19 +155,30 @@ function isVisible(msg: Message): boolean {
       </BCollapse>
     </div>
 
-    <div v-if="store.history.length" class="d-flex flex-column gap-2 overflow-y-auto" style="min-height: 0;">
+    <div
+      v-if="store.history.length"
+      class="d-flex flex-column gap-2 overflow-y-auto"
+      style="min-height: 0"
+    >
       <button class="chat-toggle" @click="showHistory = !showHistory">
-        <span class="text-uppercase fw-semibold text-body-secondary"
-          style="font-size: 0.6875rem; letter-spacing: 0.12em;">
+        <span
+          class="text-uppercase fw-semibold text-body-secondary"
+          style="font-size: 0.6875rem; letter-spacing: 0.12em"
+        >
           {{ showHistory ? '▾' : '▸' }} History
         </span>
         <span class="chat-badge">{{ store.history.length }}</span>
       </button>
       <BCollapse :visible="showHistory">
-        <BListGroup flush class="" style="max-height: 240px;">
-          <BListGroupItem v-for="entry in store.history" :key="entry.id" role="button"
-            @click="store.selectFromHistory(entry)" class="history-item py-2 px-2">
-            <div class="text-truncate" style="font-size: 0.875rem;">
+        <BListGroup flush class="" style="max-height: 240px">
+          <BListGroupItem
+            v-for="entry in store.history"
+            :key="entry.id"
+            role="button"
+            @click="store.selectFromHistory(entry)"
+            class="history-item py-2 px-2"
+          >
+            <div class="text-truncate" style="font-size: 0.875rem">
               {{ entry.prompt }}
             </div>
             <small class="text-body-secondary">
@@ -148,27 +190,41 @@ function isVisible(msg: Message): boolean {
     </div>
     <!--Input-->
     <div class="d-flex flex-column gap-2">
-      <BFormTextarea :model-value="store.prompt" @update:model-value="(v: unknown) => store.setPrompt(String(v ?? ''))"
-        @keydown="handleKeydown" placeholder="Describe the music you want to hear…" rows="4" class="prompt-textarea" />
+      <BFormTextarea
+        :model-value="store.prompt"
+        @update:model-value="(v: unknown) => store.setPrompt(String(v ?? ''))"
+        @keydown="handleKeydown"
+        placeholder="Describe the music you want to hear…"
+        rows="4"
+        class="prompt-textarea"
+      />
       <BButtonGroup>
-        <BButton variant="primary" :disabled="!store.prompt.trim() || store.isLoading" @click="store.generate()"
-          class="align-self-start">
+        <BButton
+          variant="primary"
+          :disabled="!store.prompt.trim() || store.isLoading"
+          @click="store.generate()"
+          class="align-self-start"
+        >
           <BSpinner v-if="store.isLoading" small class="me-1" />
           <FontAwesomeIcon v-else icon="wand-magic-sparkles" class="me-1" />
           {{ store.isLoading ? 'Generating…' : 'Send' }}
         </BButton>
-        <BButton v-if="store.conversation.length" variant="outline-secondary" @click="store.resetConversation()">
+        <BButton
+          v-if="store.conversation.length"
+          variant="outline-secondary"
+          @click="store.resetConversation()"
+        >
           New
         </BButton>
       </BButtonGroup>
 
-
       <p v-if="store.error" class="text-danger small mb-0">{{ store.error }}</p>
-      <p class="text-body-secondary mb-0" style="font-size: 0.75rem;">
+      <p class="text-body-secondary mb-0" style="font-size: 0.75rem">
         <kbd>⌘</kbd>+<kbd>Enter</kbd> to generate
         <span v-if="store.conversation.length" class="ms-2">
-          &middot; {{store.conversation.filter(m => m.role === 'user').length}} turn{{store.conversation.filter(m =>
-            m.role === 'user').length > 1 ? 's' : ''}}
+          &middot; {{ store.conversation.filter((m) => m.role === 'user').length }} turn{{
+            store.conversation.filter((m) => m.role === 'user').length > 1 ? 's' : ''
+          }}
         </span>
       </p>
     </div>
