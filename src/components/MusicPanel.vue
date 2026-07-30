@@ -186,7 +186,7 @@ function downloadMidi() {
       <div class="flex-fill d-flex flex-column align-items-center p-3 sheet-area overflow-auto">
 
         <!-- Volume control -->
-        <Brow>
+        <div class="row">
           <div class="col-8 volume-row w-100 mt-3 d-flex align-items-center gap-2" style="max-width: 760px">
             <FontAwesomeIcon :icon="volume === 0 ? 'volume-mute' : 'volume-up'"
               class="text-body-secondary flex-shrink-0" size="sm" />
@@ -197,7 +197,7 @@ function downloadMidi() {
             </span>
           </div>
           <div ref="audioRef" class="col-4 audio-controls w-100 mt-2" style="max-width: 760px"></div>
-        </Brow>
+        </div>
 
         <div ref="notationRef" class="w-100" style="max-width: 760px"></div>
 
