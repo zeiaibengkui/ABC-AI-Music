@@ -185,9 +185,11 @@ function downloadMidi() {
     <template v-if="store.hasNotation">
       <div class="flex-fill d-flex flex-column align-items-center p-3 sheet-area overflow-auto">
 
-        <!-- Volume control -->
-        <div class="row">
-          <div class="col-8 volume-row w-100 mt-3 d-flex align-items-center gap-2" style="max-width: 760px">
+        <!-- Audio control -->
+        <div class="row w-100 align-items-center">
+          <div ref="audioRef" class="col-8 audio-controls"></div>
+          <!--volume-->
+          <div class="col-4 volume-row d-flex  gap-2">
             <FontAwesomeIcon :icon="volume === 0 ? 'volume-mute' : 'volume-up'"
               class="text-body-secondary flex-shrink-0" size="sm" />
             <input type="range" class="form-range flex-fill" min="0" max="1" step="0.01" :value="volume"
@@ -196,7 +198,6 @@ function downloadMidi() {
               {{ Math.round(volume * 100) }}%
             </span>
           </div>
-          <div ref="audioRef" class="col-4 audio-controls w-100 mt-2" style="max-width: 760px"></div>
         </div>
 
         <div ref="notationRef" class="w-100" style="max-width: 760px"></div>

@@ -19,6 +19,9 @@ declare module 'vue' {
     BListGroup: typeof import('bootstrap-vue-next/components/BListGroup')['BListGroup']
     BListGroupItem: typeof import('bootstrap-vue-next/components/BListGroup')['BListGroupItem']
     BSpinner: typeof import('bootstrap-vue-next/components/BSpinner')['BSpinner']
+    ChatHistory: typeof import('./components/ChatHistory.vue')['default']
+    ChatInput: typeof import('./components/ChatInput.vue')['default']
+    ChatMessage: typeof import('./components/chatMessage.vue')['default']
     MusicPanel: typeof import('./components/MusicPanel.vue')['default']
     PromptPanel: typeof import('./components/PromptPanel.vue')['default']
   }
