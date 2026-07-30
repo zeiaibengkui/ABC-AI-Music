@@ -222,7 +222,9 @@ export function useAiGenerator() {
           continue;
         }
 
-        const abc = String(toolUse.input?.abc_notation ?? '');
+        let abc = String(toolUse.input?.abc_notation ?? '');
+        // Blank lines end the tune in ABC — strip them
+        abc = abc.replace(/\n\n+/g, '\n')
         const voice = toolUse.input?.voice ? String(toolUse.input.voice) : null;
         const comment = toolUse.input?.comment ? String(toolUse.input.comment) : null;
 
@@ -513,6 +515,7 @@ function stripMarkdownFences(text: string): string {
   return text
     .replace(/^```(?:abc)?\s*\n?/i, '')
     .replace(/\n?```\s*$/i, '')
+    .replace(/\n\n+/g, '\n')
     .trim();
 }
 

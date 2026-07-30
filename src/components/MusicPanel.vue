@@ -79,7 +79,9 @@ async function renderSheet() {
   audioRef.value.innerHTML = '';
 
   try {
-    const visualObj = abcjs.renderAbc(notationRef.value, store.abcNotation, {
+    // Blank lines end the ABC tune — strip before rendering
+    const cleanAbc = store.abcNotation.replace(/\n\n+/g, '\n')
+    const visualObj = abcjs.renderAbc(notationRef.value, cleanAbc, {
       responsive: 'resize',
       add_classes: true,
       staffwidth: 720,
