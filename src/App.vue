@@ -47,7 +47,8 @@ watch(
       <footer
         class="app-footer px-4 py-1 border-top text-center text-body-secondary small flex-shrink-0"
       >
-        Built with Vue 3 &middot; abcjs &middot; AI
+        <template v-if="store.isRenderingNotation">Rendering sheet music…</template>
+        <template v-else>Built with Vue 3 &middot; abcjs &middot; AI</template>
       </footer>
     </div>
   </BApp>

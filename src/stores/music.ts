@@ -23,7 +23,8 @@ export const useMusicStore = defineStore(
     const darkMode = ref(false);
     const conversation = ref<Message[]>([]);
     const isCallingTool = ref(false);
-    const renderError = ref<string | null>(null);
+    const renderError = ref<string | null>(null)
+    const isRenderingNotation = ref(false);
 
     const { generateStream, resetReadLock, requireRead } = useAiGenerator();
 
@@ -166,6 +167,7 @@ export const useMusicStore = defineStore(
       conversation,
       isCallingTool,
       renderError,
+      isRenderingNotation,
       setPrompt,
       setAbcNotation,
       setPlaying,

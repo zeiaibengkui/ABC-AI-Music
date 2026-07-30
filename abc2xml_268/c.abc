@@ -1,0 +1,311 @@
+
+X:1
+T:13. Swordsman of a Distant Star (Piano Only)
+%%score ( 1 2 ) ( 3 4 ) 5 6
+L:1/8
+Q:1/4=128
+M:4/4
+K:Eb
+%%stretchlast true
+%%pagewidth 21cm
+
+V:1 treble nm="Piano" snm="Pno"
+%%MIDI program 0
+V:2 treble
+%%MIDI program 0
+V:3 bass nm="Piano" snm="Pno"
+%%MIDI program 0
+V:4 bass
+%%MIDI program 0
+V:5 treble+8 nm="Piano" snm="Pno"
+%%MIDI program 0
+V:6 bass nm="Piano" snm="Pno"
+%%MIDI program 0
+
+% ==========================================
+% SECTION A — Main Theme (bars 1–16)
+% ==========================================
+V:1
+ c_e d/_e/_B c_e d/_e/_B | c_e d/_e/_B c2 z/ c/d/_e/ | dg f/g/d dg f/g/d | dg f/g/d _e4 |
+ c_e d/_e/_B c_e d/_e/_B | c_e d/_e/_B c2 z/ c/d/_e/ | dg f/g/d dg f/g/d | dg f/g/d _e4 |
+ c_e d/_e/_B c_e d/_e/_B | c_e d/_e/_B c2 z/ c/d/_e/ | dg f/g/d dg f/g/d | dg f/g/d _e4 |
+ c_e d/_e/_B c_e d/_e/_B | c_e d/_e/_B c2 z/ c/d/_e/ | dg f/g/d dg f/g/d | dg f/g/d _e4 |
+V:2
+ x8 | x8 | x8 | x8 |
+ x8 | x8 | x8 | x8 |
+ x8 | x8 | x8 | x8 |
+ x8 | x8 | x8 | x8 |
+V:3
+[K:C] [G,C,]4 [F,_B,,]4 | [_E,C,^G,,]8 | [D,G,,]4 [G,C,]2 [F,_B,,]2 | [_E,C,G,,]8 |
+ [G,C,]4 [F,_B,,]4 | [_E,C,^G,,]8 | [D,G,,]4 [G,C,]2 [F,_B,,]2 | [_E,C,G,,]8 |
+ [G,C,]4 [F,_B,,]4 | [_E,C,^G,,]8 | [D,G,,]4 [G,C,]2 [F,_B,,]2 |[K:Eb] [_E,C,G,,]8 |
+ [G,C,]4 [F,_B,,]4 | [_E,C,^G,,]8 | [D,G,,]4 [G,C,]2 [F,_B,,]2 | [_E,C,G,,]8 |
+V:4
+[K:C] x8 | x8 | x8 | x8 |
+ x8 | x8 | x8 | x8 |
+ x8 | x8 | x8 |[K:Eb] x8 |
+ x8 | x8 | x8 | x8 |
+V:5
+[K:C] z8 | z8 | z8 | z8 |
+ z8 | z8 | z8 | z8 |
+[K:Eb] z G/c/ e<g z F/B/ d<f | z E/^G/ c/e/^g/c'/ d'/e'/c'/d'/ b/c'/=g/c'/ | z d/g/ b<d' z d/b/ d'<f' | z E/c/ e/g/c'/e'/ c'2 e'2 |
+ z G/c/ e<g z F/B/ d<f | z E/^G/ c/e/^g/c'/ d'/e'/c'/d'/ b/c'/=g/c'/ | z d/g/ b<d' z d/b/ d'<f' | z E/c/ e/g/c'/e'/ c'2 e'2 |
+V:6
+[K:C] z8 | z8 | z8 | z8 |
+ z8 | z8 | z8 | z8 |
+ z8 | z8 |[K:Eb] z8 | z8 |
+ z8 | z8 | z8 | z8 |
+
+% ==========================================
+% SECTION B — Variation (bars 17–24)
+% ==========================================
+V:1
+ c_e d/_e/_B cG/g G/_B/c/ | c_e d/c/_B d>_e _B/d/g/[fg]/ | c_e d/_e/_B cG/g G/_B/c/ | c_e d/c/_B [c_E]4 |
+ c_e d/_e/_B cG/g G/_B/c/ | c_e d/c/_B d>_e _B/d/g/[fg]/ | c_e d/_e/_B cG/g G/_B/c/ | c_e d/c/_B [c_E]3 _B |
+V:2
+ x8 | x8 | x8 | x8 |
+ x8 | x8 | x8 | x8 |
+V:3
+ G,,4 F,,4 | _E,,4 F,,4 | G,,4 F,,4 | _E,,8 |
+ _E,,4 G,,4 | F,,4 _E,,4 | _E,,4 G,,4 | F,,4 _E,,4 |
+V:4
+ x8 | x8 | x8 | z4 C,4 |
+ x8 | x8 | x8 | x8 |
+V:5
+ z8 | z8 | z8 | z8 |
+ z8 | z8 | z8 | z8 |
+V:6
+ C,3/2E,3/2 F,G,3/2F,3/2E, | D,3/2E,3/2 D,C,3/2B,,3/2G,, | C,3/2E,3/2 F,G,3/2F,3/2E, | D,3/2E,3/2 D,G,,/G,,/^G,,/ z/ [C,E,,][E,=G,,] |
+ C,G,,/E, G,,/F, G,C,/F, C,/E, | D,B,,/E, B,,/D, C,G,,/B,, ^G,,/=G,, | C,G,,/E, G,,/F, G,C,/F, D,/E, | D,B,,/E, B,,/D, C,/B,,/G,,/C,/ C,B,, |
+
+% ==========================================
+% SECTION C — Chromatic Development (bars 25–32)
+% ==========================================
+V:1
+ ^G_B c z/ =G G/_B/ c2- c/ | ^G_B c/d/ z/ _e _e/d/ c2- c/ | ^G/C/_B/C/ c/C/ z/ =G/ C/G/_B/ c2- c/ | ^G/C/_B/C/ c/d/ z/ _e _e/d/f _e/d/_B/ |
+ C/C/_E/ z/ F/G/ z/ D D/_E/D C/_B,/G,/ | C/C/_E/ z/ F/G/ z/ D D/_E/ D2- D/ | C/C/_E/ z/ F/G/ z/ D D/_E/D C/_B,/G,/ | C/C/_E/ z/ F/G/ z/ _E _E/G/ c2- c/ |
+V:2
+ x8 | x8 | x8 | x8 |
+ x8 | x8 | x8 | x8 |
+V:3
+ [C,^G,,]7/2 [C,=G,,]4- [C,G,,]/ | [C,^G,,]7/2 [C,=G,,]4- [C,G,,]/ | [C,^G,,]7/2 [C,=G,,]4- [C,G,,]/ | [C,^G,,]7/2 [C,=G,,]4- [C,G,,]/ |
+ z8 | z8 | z8 | z8 |
+V:4
+ x8 | x8 | x8 | x8 |
+ x8 | x8 | x8 | x8 |
+V:5
+ z8 | z8 | z8 | z8 |
+ z8 | z8 | z8 | z8 |
+V:6
+ z8 | z8 | z8 | z8 |
+ [C,G,,]/ z/ G, [C,G,,]/ z/ G, [B,,F,,]/ z/ F, [B,,F,,]/ z/ F, | [^G,,E,,]/ z/ E, [^G,,E,,]/ z/ E, [B,,F,,]/ z/ F, [B,,F,,]/ z/ F, | [C,=G,,]/ z/ G, [C,G,,]/ z/ G, [B,,F,,]/ z/ F, [B,,F,,]/ z/ F, | [^G,,E,,]/ z/ E, [^G,,E,,]/ z/ E, E,,/^G,,/C,/E,/ [=G,E,]/[CG,]/[EC]/[GE]/ |
+
+% ==========================================
+% SECTION D — Climax / Fast Section (bars 33–48, Q=180)
+% ==========================================
+V:1
+[Q:1/4=180] [cG_E]4- [cGE] [_EC] [G_E][cG] | [cG]3 [dF]3 [_eG]2 | _E6 Gc | [E-cd]4 [dE]2 Gc |
+ [cG_E]4- [cGE] [_EC] [G_E][cG] | [cG]3 [dF]3 [_eG]2 | [dF]3 [_eG]3 [f_B]2 | [_eG]3 [dF]3 [_BD]2 |
+ c8 | _B8 | [_eG]3 [dF]3 [c_E]2- | [cE]8 |
+ c''/g''/c'''/ z/ c''/g''/c'''/ z/ c''/g''/c'''/ z/ c''/g''/c'''/ z/ | z8 | c''/g''/c'''/ z/ c''/g''/c'''/ z/ c''/g''/c'''/ z/ c''/g''/c'''/ z/ | z8 |
+V:2
+ c4 c _E3- | z4 z _E _e2 | x8 | x8 |
+ x8 | x8 | x8 | x8 |
+ [^gf]4 z ^g =gf | [fd]3 d3 f2 | x8 | x8 |
+ x8 | x8 | x8 | x8 |
+V:3
+ G,,8 | F,,8 | _E,,8 | F,,4 F,,2 F,,2 |
+ G,,8 | F,,8 | _E,,8 | F,,2 F,,2 F,,2 F,,2 |
+ [C,^G,,F,,]8 | [_B,,F,,D,,]8 | [G,,_E,,C,,]3 [F,,D,,_B,,,]3 [G,,_E,,]2- | [G,,E,,]6 z2 |
+ G,,8 | F,,8 | _E,,8 | F,,8 |
+V:4
+ C,4 z C, D,_E, | D,3 _B,,3 G,,2 | C,4 z C, D,_E, | D,3 G,3 F,2 |
+ _E4 z _E FG | _B3 F3 D2 | _E4 z _E FG | F3 ^G3 _B2 |
+ x8 | x8 | x8 | z3 C,/_B,,/ G,,/_B,,/C,/_B,,/ F,,/_B,,/ z/ C,/ |
+ x8 | z3 C, C,G,, z2 | x8 | x8 |
+V:5
+ z8 | z8 | z8 | z8 |
+ z8 | z8 | z8 | z8 |
+ z8 | z8 | z8 | z8 |
+ z8 | z8 | z8 | z8 |
+V:6
+ C,/E,/G, C,[G,E,] C,[G,E,] C,[G,E,] | B,,/D,/F, B,,[F,D,] B,,[F,D,] B,,[F,D,] | ^G,,/C,/E, ^G,,[E,C,] ^G,,[E,C,] ^G,,[E,C,] | B,,/D,/F, B,,[F,D,] B,,[F,D,] B,,[F,D,] |
+ C,/E,/G, C,[G,E,] C,[G,E,] C,[G,E,] | B,,/D,/F, B,,[F,D,] B,,[F,D,] B,,[F,D,] | ^G,,/C,/E, ^G,,[E,C,] ^G,,[E,C,] ^G,,[E,C,] | B,,/D,/F, B,,[F,D,] B,,[F,D,] B,,[F,D,] |
+ z8 | z8 | z8 | z8 |
+ z8 | z8 | z8 | z8 |
+
+% ==========================================
+% SECTION E — Staccato / Arpeggiated (bars 49–68)
+% ==========================================
+V:1
+ c''/g''/c'''/ z/ c''/g''/c'''/ z/ c''/g''/c'''/ z/ c''/g''/c'''/ z/ | z8 | c''/g''/c'''/ z/ c''/g''/c'''/ z/ c''/g''/c'''/ z/ c''/g''/c'''/ z/ | z8 |
+ f'/_e'/d'/_e'/ f'/_e'/d'/_e'/ f'/_e'/d'/_e'/ f'/_e'/d'/f'/ | _e'/d'/c'/d'/ _e'/d'/c'/d'/ _e'/d'/c'/d'/ _e'/d'/c'/d'/ |
+V:2
+ x8 | x8 | x8 | x8 |
+ x8 | x8 |
+V:3
+ [C_E,]8 | _B,8 | ^G,8 | _B,8 |
+ [GFG,]8 | [G_EG,]4 [GDG,]4 |
+V:4
+ x8 | x8 | x8 | x8 |
+ x8 | x8 |
+V:5
+ z8 | z8 | z8 | z8 |
+ z8 | z8 |
+V:6
+ z8 | z8 | z8 | z8 |
+ z8 | z8 |
+
+% ==========================================
+% SECTION F — Slower, Expressive (bars 69–76, Q=170)
+% ==========================================
+V:1
+[Q:1/4=170] [_bg_e][c'g_e] [c'g_e] z [d'_bg][_e'c'g] [_e'c'g] z | [d'_bf][_bgd] [g_e] [c'gc]4- [c'gc] |
+ [_bg_e][c'g_e] [c'g_e] z [d'_bg][_e'c'g] [_e'c'g] z | [d'_b][_e'c'] [f'd'] d'4- d' |
+ [_bg_e][c'g_e] [c'g_e] z [d'_bg][_e'c'g] [_e'c'g] z | [d'_bf][_bgd] [g_e] [c'gc]4- [c'gc] |
+ z8 |
+V:2
+ x8 | x8 | x8 | x8 |
+ x8 | x8 | z3 c' g'2 =b2 |
+V:3
+ [C,_E,,]/_B,,/G,,/_B,,/ [C,_E,,] z [D,G,,]/_E,/D,/_B,,/ [_E,G,,] z | [DD,][_B,_B,,] [G,G,,] G,4- G, |
+ [C,_E,,]/_B,,/G,,/_B,,/ [C,_E,,] z [D,G,,]/_E,/D,/_B,,/ [_E,G,,] z | [_B,D,_B,,][C_E,C,] [DF,D,] G,3 [D,=B,,D,,]2 |
+ [_B,_E,_B,,][C_E,C,] [C_E,C,] z [DG,D,][_EG,_E,] [_EG,_E,] z | [DF,D,][CD,_B,,] [G,_E,G,,] [CG,C,]4- [CG,C,] |
+ z8 |
+V:4
+ x8 | z3 C,/_B,,/ G,,/_B,,/C,/_B,,/ F,,/_B,,/ z/ C,/ |
+ x8 | z3 C, C,G,, z2 | x8 | x8 |
+ x8 |
+V:5
+ z8 | z8 | z8 | z8 |
+ z8 | z8 | z8 |
+V:6
+ z8 | z8 | z8 | z8 |
+ z8 | z8 | z8 |
+
+% ==========================================
+% SECTION G — Main Theme Reprise (bars 77–end)
+% ==========================================
+V:1
+[Q:1/4=128] c_e d/_e/_B c_e d/_e/_B | c_e d/_e/_B c2 z/ c/d/_e/ | dg f/g/d dg f/g/d | dg f/g/d _e4 |
+ c_e d/_e/_B c_e d/_e/_B | c_e d/_e/_B c2 z/ c/d/_e/ | dg f/g/d dg f/g/d | dg f/g/d _e4 |
+ c_e d/_e/_B c_e d/_e/_B | c_e d/_e/_B c2 z/ c/d/_e/ | dg f/g/d dg f/g/d | dg f/g/d _e4 |
+ c_e d/_e/_B c_e d/_e/_B | c_e d/_e/_B c2 z/ c/d/_e/ | dg f/g/d dg f/g/d | dg f/g/d _e4 |
+ c_e d/_e/_B cG/g G/_B/c/ | c_e d/c/_B d>_e _B/d/g/[fg]/ | c_e d/_e/_B cG/g G/_B/c/ | c_e d/c/_B [c_E]4 |
+ c_e d/_e/_B cG/g G/_B/c/ | c_e d/c/_B d>_e _B/d/g/[fg]/ | c_e d/_e/_B cG/g G/_B/c/ | c_e d/c/_B [c_E]3 _B |
+ ^G_B c z/ =G G/_B/ c2- c/ | ^G_B c/d/ z/ _e _e/d/ c2- c/ | ^G/C/_B/C/ c/C/ z/ =G/ C/G/_B/ c2- c/ | ^G/C/_B/C/ c/d/ z/ _e _e/d/f _e/d/_B/ |
+ C/C/_E/ z/ F/G/ z/ D D/_E/D C/_B,/G,/ | C/C/_E/ z/ F/G/ z/ D D/_E/ D2- D/ | C/C/_E/ z/ F/G/ z/ D D/_E/D C/_B,/G,/ | C/C/_E/ z/ F/G/ z/ _E _E/G/ c2- c/ |
+V:2
+ x8 | x8 | x8 | x8 |
+ x8 | x8 | x8 | x8 |
+ x8 | x8 | x8 | x8 |
+ x8 | x8 | x8 | x8 |
+ x8 | x8 | x8 | x8 |
+ x8 | x8 | x8 | x8 |
+ x8 | x8 | x8 | x8 |
+ x8 | x8 | z3 c' g'2 =b2 |
+V:3
+ [G,C,]4 [F,_B,,]4 | [_E,C,^G,,]8 | [D,G,,]4 [G,C,]2 [F,_B,,]2 | [_E,C,G,,]8 |
+ [G,C,]4 [F,_B,,]4 | [_E,C,^G,,]8 | [D,G,,]4 [G,C,]2 [F,_B,,]2 | [_E,C,G,,]8 |
+ [G,C,]4 [F,_B,,]4 | [_E,C,^G,,]8 | [D,G,,]4 [G,C,]2 [F,_B,,]2 | [_E,C,G,,]8 |
+ [G,C,]4 [F,_B,,]4 | [_E,C,^G,,]8 | [D,G,,]4 [G,C,]2 [F,_B,,]2 | [_E,C,G,,]8 |
+ G,,4 F,,4 | _E,,4 F,,4 | G,,4 F,,4 | _E,,8 |
+ _E,,4 G,,4 | F,,4 _E,,4 | _E,,4 G,,4 | F,,4 _E,,4 |
+ [C,^G,,]7/2 [C,=G,,]4- [C,G,,]/ | [C,^G,,]7/2 [C,=G,,]4- [C,G,,]/ | [C,^G,,]7/2 [C,=G,,]4- [C,G,,]/ | [C,^G,,]7/2 [C,=G,,]4- [C,G,,]/ |
+ z8 | z8 | z8 | z8 |
+V:4
+ x8 | x8 | x8 | x8 |
+ x8 | x8 | x8 | x8 |
+ x8 | x8 | x8 | x8 |
+ x8 | x8 | x8 | x8 |
+ z4 C,4 | x8 | x8 | x8 |
+ x8 | x8 | x8 | x8 |
+ x8 | x8 | x8 | x8 |
+ x8 | x8 | x8 | x8 |
+V:5
+ z8 | z8 | z8 | z8 |
+ z8 | z8 | z8 | z8 |
+ z8 | z8 | z8 | z8 |
+ z8 | z8 | z8 | z8 |
+ z8 | z8 | z8 | z8 |
+ z8 | z8 | z8 | z8 |
+ z8 | z8 | z8 | z8 |
+ z8 | z8 | z8 | z8 |
+V:6
+ C,3/2E,3/2 F,G,3/2F,3/2E, | D,3/2E,3/2 D,C,3/2B,,3/2G,, | C,3/2E,3/2 F,G,3/2F,3/2E, | D,3/2E,3/2 D,G,,/G,,/^G,,/ z/ [C,E,,][E,=G,,] |
+ C,G,,/E, G,,/F, G,C,/F, C,/E, | D,B,,/E, B,,/D, C,G,,/B,, ^G,,/=G,, | C,G,,/E, G,,/F, G,C,/F, D,/E, | D,B,,/E, B,,/D, C,/B,,/G,,/C,/ C,B,, |
+ z8 | z8 | z8 | z8 |
+ [C,G,,]/ z/ G, [C,G,,]/ z/ G, [B,,F,,]/ z/ F, [B,,F,,]/ z/ F, | [^G,,E,,]/ z/ E, [^G,,E,,]/ z/ E, [B,,F,,]/ z/ F, [B,,F,,]/ z/ F, | [C,=G,,]/ z/ G, [C,G,,]/ z/ G, [B,,F,,]/ z/ F, [B,,F,,]/ z/ F, | [^G,,E,,]/ z/ E, [^G,,E,,]/ z/ E, E,,/^G,,/C,/E,/ [=G,E,]/[CG,]/[EC]/[GE]/ |
+ C,/E,/G, C,[G,E,] C,[G,E,] C,[G,E,] | B,,/D,/F, B,,[F,D,] B,,[F,D,] B,,[F,D,] | ^G,,/C,/E, ^G,,[E,C,] ^G,,[E,C,] ^G,,[E,C,] | B,,/D,/F, B,,[F,D,] B,,[F,D,] B,,[F,D,] |
+ C,/E,/G, C,[G,E,] C,[G,E,] C,[G,E,] | B,,/D,/F, B,,[F,D,] B,,[F,D,] B,,[F,D,] | ^G,,/C,/E, ^G,,[E,C,] ^G,,[E,C,] ^G,,[E,C,] | B,,/D,/F, B,,[F,D,] B,,[F,D,] B,,[F,D,] |
+
+% ==========================================
+% SECTION H — Final Climax (Q=180)
+% ==========================================
+V:1
+[Q:1/4=180] [cG_E]4- [cGE] [_EC] [G_E][cG] | [cG]3 [dF]3 [_eG]2 | _E6 Gc | [E-cd]4 [dE]2 Gc |
+ [cG_E]4- [cGE] [_EC] [G_E][cG] | [cG]3 [dF]3 [_eG]2 | [dF]3 [_eG]3 [f_B]2 | [_eG]3 [dF]3 [_BD]2 |
+ c8 | _B8 | [_eG]3 [dF]3 [c_E]2- | [cE]8 |
+ c''/g''/c'''/ z/ c''/g''/c'''/ z/ c''/g''/c'''/ z/ c''/g''/c'''/ z/ | z8 | c''/g''/c'''/ z/ c''/g''/c'''/ z/ c''/g''/c'''/ z/ c''/g''/c'''/ z/ | z8 |
+ c''/g''/c'''/ z/ c''/g''/c'''/ z/ c''/g''/c'''/ z/ c''/g''/c'''/ z/ | z8 | c''/g''/c'''/ z/ c''/g''/c'''/ z/ c''/g''/c'''/ z/ c''/g''/c'''/ z/ | z8 |
+ f'/_e'/d'/_e'/ f'/_e'/d'/_e'/ f'/_e'/d'/_e'/ f'/_e'/d'/f'/ | _e'/d'/c'/d'/ _e'/d'/c'/d'/ _e'/d'/c'/d'/ _e'/d'/c'/d'/ |
+V:2
+ c4 c _E3- | z4 z _E _e2 | x8 | x8 |
+ x8 | x8 | x8 | x8 |
+ [^gf]4 z ^g =gf | [fd]3 d3 f2 | x8 | x8 |
+ x8 | x8 | x8 | x8 |
+ x8 | x8 | x8 | x8 |
+ x8 | x8 |
+V:3
+ G,,8 | F,,8 | _E,,8 | F,,4 F,,2 F,,2 |
+ G,,8 | F,,8 | _E,,8 | F,,2 F,,2 F,,2 F,,2 |
+ [C,^G,,F,,]8 | [_B,,F,,D,,]8 | [G,,_E,,C,,]3 [F,,D,,_B,,,]3 [G,,_E,,]2- | [G,,E,,]6 z2 |
+ G,,8 | F,,8 | _E,,8 | F,,8 |
+ [C_E,]8 | _B,8 | ^G,8 | _B,8 |
+ [GFG,]8 | [G_EG,]4 [GDG,]4 |
+V:4
+ C,4 z C, D,_E, | D,3 _B,,3 G,,2 | C,4 z C, D,_E, | D,3 G,3 F,2 |
+ _E4 z _E FG | _B3 F3 D2 | _E4 z _E FG | F3 ^G3 _B2 |
+ x8 | x8 | x8 | z3 C,/_B,,/ G,,/_B,,/C,/_B,,/ F,,/_B,,/ z/ C,/ |
+ x8 | z3 C, C,G,, z2 | x8 | x8 |
+ x8 | x8 | x8 | x8 |
+ x8 | x8 |
+V:5
+ z8 | z8 | z8 | z8 |
+ z8 | z8 | z8 | z8 |
+ z8 | z8 | z8 | z8 |
+ z8 | z8 | z8 | z8 |
+ z G/c/ e<g z F/B/ d<f | z E/^G/ c/e/^g/c'/ d'/e'/c'/d'/ b/c'/=g/c'/ | z d/g/ b<d' z d/b/ d'<f' | z E/c/ e/g/c'/e'/ c'2 e'2 |
+ z G/c/ e<g z F/B/ d<f | z E/^G/ c/e/^g/c'/ d'/e'/c'/d'/ b/c'/=g/c'/ | z d/g/ b<d' z d/b/ d'<f' | z E/c/ e/g/c'/e'/ c'2 e'2 |
+V:6
+ C,/E,/G, C,[G,E,] C,[G,E,] C,[G,E,] | B,,/D,/F, B,,[F,D,] B,,[F,D,] B,,[F,D,] | ^G,,/C,/E, ^G,,[E,C,] ^G,,[E,C,] ^G,,[E,C,] | B,,/D,/F, B,,[F,D,] B,,[F,D,] B,,[F,D,] |
+ C,/E,/G, C,[G,E,] C,[G,E,] C,[G,E,] | B,,/D,/F, B,,[F,D,] B,,[F,D,] B,,[F,D,] | ^G,,/C,/E, ^G,,[E,C,] ^G,,[E,C,] ^G,,[E,C,] | B,,/D,/F, B,,[F,D,] B,,[F,D,] B,,[F,D,] |
+ z8 | z8 | z8 | z8 |
+ z8 | z8 | z8 | z8 |
+ z8 | z8 | z8 | z8 |
+ z8 | z8 |
+
+% ==========================================
+% CODA — Final Section (bars end, Q=170)
+% ==========================================
+V:1
+[Q:1/4=170] [_bg_e][c'g_e] [c'g_e] z [d'_bg][_e'c'g] [_e'c'g] z | [d'_bf][_bgd] [g_e] [c'gc]4- [c'gc] |
+ [_bg_e][c'g_e] [c'g_e] z [d'_bg][_e'c'g] [_e'c'g] z | [d'_b][_e'c'] [f'd'] d'4- d' |
+ [_bg_e][c'g_e] [c'g_e] z [d'_bg][_e'c'g] [_e'c'g] z | [d'_bf][_bgd] [g_e] [c'gc]4- [c'gc] |]
+V:2
+ x8 | x8 | x8 | x8 |
+ x8 | x8 |]
+V:3
+ [C,_E,,]/_B,,/G,,/_B,,/ [C,_E,,] z [D,G,,]/_E,/D,/_B,,/ [_E,G,,] z | [DD,][_B,_B,,] [G,G,,] G,4- G, |
+ [C,_E,,]/_B,,/G,,/_B,,/ [C,_E,,] z [D,G,,]/_E,/D,/_B,,/ [_E,G,,] z | [_B,D,_B,,][C_E,C,] [DF,D,] G,3 [D,=B,,D,,]2 |
+ [_B,_E,_B,,][C_E,C,] [C_E,C,] z [DG,D,][_EG,_E,] [_EG,_E,] z | [DF,D,][CD,_B,,] [G,_E,G,,] [CG,C,]4- [CG,C,] |]
+V:4
+ x8 | z3 C,/_B,,/ G,,/_B,,/C,/_B,,/ F,,/_B,,/ z/ C,/ |
+ x8 | z3 C, C,G,, z2 | x8 | x8 |]
+V:5
+ z8 | z8 | z8 | z8 |
+ z8 | z8 |]
+V:6
+ z8 | z8 | z8 | z8 |
+ z8 | z8 |]
+

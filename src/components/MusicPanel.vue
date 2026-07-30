@@ -10,11 +10,11 @@ const notationRef = ref<HTMLDivElement>();
 const audioRef = ref<HTMLDivElement>();
 const showNotation = ref(false);
 const volume = ref(0.75);
-const isUserEditing = ref(false);
 const renderError = ref<string | null>(null);
+let renderDebounce: ReturnType<typeof setTimeout> | null = null;
 
 function commitAbcEdit() {
-  isUserEditing.value = false;
+  if (renderDebounce) clearTimeout(renderDebounce);
   renderSheet();
 }
 
@@ -74,6 +74,7 @@ async function renderSheet() {
   if (!notationRef.value || !audioRef.value || !store.abcNotation) return;
   if (isRendering) return;
   isRendering = true;
+  store.isRenderingNotation = true;
 
   notationRef.value.innerHTML = '';
   audioRef.value.innerHTML = '';
@@ -119,10 +120,12 @@ async function renderSheet() {
       }
       renderError.value = null;
       store.renderError = null;
+      store.isRenderingNotation = false;
     }
     isRendering = false;
   } catch (e) {
     isRendering = false;
+    store.isRenderingNotation = false;
     const msg = e instanceof Error ? e.message : String(e);
     renderError.value = msg;
     store.renderError = msg;
@@ -132,8 +135,7 @@ async function renderSheet() {
 
 watch(
   () => store.abcNotation,
-  async (val) => {
-    if (isUserEditing.value) return;
+  (val) => {
     if (!val) {
       // Notation cleared — reset the display
       if (notationRef.value) notationRef.value.innerHTML = '';
@@ -142,8 +144,11 @@ watch(
       store.renderError = null;
       return;
     }
-    await nextTick();
-    renderSheet();
+    // Debounce: render on input while editing, or immediately on AI output
+    if (renderDebounce) clearTimeout(renderDebounce);
+    renderDebounce = setTimeout(() => {
+      nextTick().then(() => renderSheet());
+    }, 150);
   },
 );
 
@@ -243,7 +248,6 @@ function downloadMidi() {
           v-model="store.abcNotation"
           class="notation-text w-100 p-3 mb-0 border rounded"
           rows="16"
-          @input="isUserEditing = true"
           @blur="commitAbcEdit"
         ></textarea>
       </BCollapse>
